@@ -18,6 +18,8 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - El usuario de ejecución **no puede** crear ni alterar tablas (test).
 - Tests de la DB que fallan como se espera: `adultos = 0`, pases ≠ adultos + niños, dos versiones vigentes, dos enlaces activos, código duplicado, lado, grupo o rol fuera del catálogo, rol repetido en la misma invitación, longitudes excedidas.
 - Los datos de prueba son ficticios; una búsqueda en el repo no encuentra teléfonos con formato real.
+- Dos respuestas simultáneas para la misma invitación terminan con exactamente una versión vigente y numeración consecutiva (la API bloquea la invitación con `SELECT … FOR UPDATE`; test).
+- Ningún código de la aplicación fuera de la purga ejecuta `DELETE` sobre `invitacion` (test estático + guarda de SQLAlchemy).
 
 ## I-3 · Tokens y enlaces
 - El token tiene 128 bits (22 caracteres base64url). En la DB solo hay HMAC + copia AES-256-GCM con identificador de llave; el token en claro no aparece en tablas ni en logs (test).

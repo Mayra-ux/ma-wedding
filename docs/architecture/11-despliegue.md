@@ -38,6 +38,7 @@ Solo los **nombres** y su propósito. Los valores reales nunca van al repositori
 |---|---|:-:|
 | `DATABASE_URL` | Conexión con el **usuario de ejecución** (solo datos), TLS obligatorio | ✔ |
 | `MIGRATION_DATABASE_URL` | Conexión con el **usuario de migraciones**, solo para `migrate` | ✔ |
+| `DB_RUNTIME_ROLE` | Nombre del usuario de ejecución al que `migrate` otorga permisos (por defecto `ma_app`) | — |
 | `TOKEN_HASH_KEY` | Llave HMAC-SHA-256 de los tokens | ✔ |
 | `TOKEN_ENCRYPTION_KEYS` | Llaves AES-256-GCM con identificador; la primera es la actual (rotación) | ✔ |
 | `SESSION_SECRET` | Firma de identificadores de sesión y del estado de OAuth | ✔ |
@@ -58,6 +59,17 @@ Ya no hay `PANEL_ORIGIN` (el panel es el mismo origen) ni `PUBLIC_INVITATION_URL
 - **Dos usuarios:** migraciones (dueño del esquema) y ejecución (solo datos). `purge` usa el de ejecución.
 - **TLS obligatorio**, con verificación de certificado si el proveedor lo permite.
 - Mover de proveedor: volcado lógico + restauración (doc 10) + `migrate`.
+- **Crear los usuarios en el proveedor** (equivale a `db/init/01-roles.sh` del entorno local; contraseñas largas y aleatorias en el gestor de secretos, nunca en el repo):
+
+  ```sql
+  CREATE ROLE ma_migrator LOGIN PASSWORD '<secreto>' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+  CREATE ROLE ma_app      LOGIN PASSWORD '<secreto>' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+  ALTER DATABASE <base> OWNER TO ma_migrator;
+  REVOKE ALL ON DATABASE <base> FROM PUBLIC;
+  GRANT CONNECT ON DATABASE <base> TO ma_migrator, ma_app;
+  ```
+
+  Después, `migrate` (con `MIGRATION_DATABASE_URL` y `DB_RUNTIME_ROLE=ma_app`) crea el esquema y otorga a `ma_app` solo permisos de datos (doc 02, «Usuarios de la DB»).
 
 ## Comparación de opciones de hosting
 
