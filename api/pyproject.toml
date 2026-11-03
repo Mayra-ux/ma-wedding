@@ -7,17 +7,21 @@ dependencies = [
     "fastapi==0.162.0",
     "uvicorn==0.54.0",
     "pydantic-settings==2.16.2",
+    "sqlalchemy==2.1.6",
+    "alembic==1.20.1",
+    "psycopg[binary]==3.3.7",
 ]
 
 [dependency-groups]
 dev = [
     "pytest==9.2.0",
-    "httpx==0.28.1",
+    "httpx2==2.16.0",
     "ruff==0.17.3",
 ]
 
 [tool.uv]
 package = false
+environments = ["sys_platform == 'win32'", "sys_platform == 'linux'"]
 
 [tool.ruff]
 line-length = 100
@@ -27,7 +31,8 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+# S608: los tests arman SQL con nombres de columna fijos del propio test (sin entrada externa).
+"tests/**" = ["S101", "S608"]
 "tools/**" = ["S603"]
 
 [tool.pytest.ini_options]
