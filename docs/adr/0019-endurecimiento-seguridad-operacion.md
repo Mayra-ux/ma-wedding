@@ -28,15 +28,10 @@ En la invitación, lo que el hosting no pueda enviar como encabezado se declara 
   2. Un comando de mantenimiento descifra cada copia, la vuelve a cifrar con la llave actual y recalcula el HMAC si cambió la llave de hash.
   3. Cuando el comando termina sin errores, se retira la llave anterior.
   - Los enlaces enviados siguen funcionando durante todo el proceso.
-- **Precisiones de implementación (I-3, 3 nov 2026):**
-  - Durante una rotación de la llave de hash, la anterior va en `TOKEN_HASH_KEY_PREVIOUS` y la búsqueda la prueba después de la actual; así los enlaces no se cortan entre el reinicio y `rotate-keys`.
-  - La copia cifrada usa como datos asociados (AAD) la invitación y el id de la llave: una copia movida de fila o con otro id no se descifra. Mide exactamente 44 bytes (nonce 12 + cifrado 16 + etiqueta 16; migración 0002).
-  - En memoria, el token vive en `TokenEnClaro`, cuyo `repr`/`str` lo ocultan.
 
 ### Datos personales en logs y errores
 - **Regla general:** ningún log, mensaje de error ni respuesta de error contiene tokens, nombres, teléfonos, alergias, mensajes ni notas. Los logs usan una lista cerrada de campos permitidos (ruta sin parámetros, código de estado, duración, código INV cuando aplique, identificador de petición).
 - **Sin servicios externos de rastreo de errores** (ningún SaaS de errores ni de analítica).
-- **Dependencia transitiva inerte (I-1, 2 nov 2026):** FastAPI exige `opentelemetry-api`. Se acepta porque es solo la interfaz y no envía datos por sí misma. Para mantenerla inerte, `api/uv.lock` no puede contener `opentelemetry-sdk` ni ningún paquete `opentelemetry-exporter-*`; un test de la API lo verifica.
 
 ### Abuso
 - **Rate limiting por token (estricto)** y **por IP (generoso**, porque las redes móviles comparten IP). Valores iniciales configurables: por token, 20 consultas y 10 respuestas por hora; por IP, 300 peticiones por hora. Se guardan en memoria; basta con una sola instancia.
@@ -72,4 +67,12 @@ En la invitación, lo que el hosting no pueda enviar como encabezado se declara 
 ## Pendientes
 
 - Canal de alertas.
+- Herramienta de escaneo de secretos (se propone en I-1).
+
+## Notas de implementación
+
+Precisiones técnicas que no cambian la decisión (ADR 0023).
+
+- **Dependencia transitiva inerte (I-1, 2 nov 2026):** FastAPI exige `opentelemetry-api`. Se acepta porque es solo la interfaz y no envía datos por sí misma. Para mantenerla inerte, `api/uv.lock` no puede contener `opentelemetry-sdk` ni ningún paquete `opentelemetry-exporter-*`; un test de la API lo verifica.
 - ~~Herramienta de escaneo de secretos~~ — resuelto en I-1: gitleaks v8.30.1 mediante pre-commit.
+- Precisiones de implementación de tokens y rotación: ver ADR 0022.

@@ -66,7 +66,7 @@ El enlace es `INVITATION_ORIGIN + "/#t=" + token` y se arma al consultarlo (se d
 | Pruebas en la nube | `https://ma-wedding-six.vercel.app` |
 | Producción | Dominio definitivo (**pendiente**) |
 
-> **Regla: NINGÚN enlace real se envía a invitados hasta definir el dominio definitivo.** El dominio queda escrito dentro de cada enlace enviado por WhatsApp; si después cambia, los enlaces ya enviados seguirían apuntando al dominio anterior. Con el dominio de pruebas solo se usan invitaciones ficticias.
+> **Regla (ADR 0021): NINGÚN enlace real se envía a invitados hasta definir el dominio definitivo.** El dominio queda escrito dentro de cada enlace enviado por WhatsApp; si después cambia, los enlaces ya enviados seguirían apuntando al dominio anterior. Con el dominio de pruebas solo se usan invitaciones ficticias.
 
 ### Llaves
 
@@ -74,7 +74,7 @@ El enlace es `INVITATION_ORIGIN + "/#t=" + token` y se arma al consultarlo (se d
 - Las llaves nunca van al repositorio; `.env.example` solo tiene `__GENERAR__`.
 - Si se pierde la llave de cifrado, los enlaces no se pueden volver a mostrar: hay que regenerarlos y reenviarlos (ADR 0008). Si se pierde la de hash, los enlaces enviados dejan de funcionar.
 
-### Rotación (`rotate-keys`)
+### Rotación (`rotate-keys`, ADR 0019 y 0022)
 
 1. Poner la llave de cifrado nueva **al principio** de `TOKEN_ENCRYPTION_KEYS`, conservando la anterior. Si también se rota la de hash: la nueva en `TOKEN_HASH_KEY` y la anterior en `TOKEN_HASH_KEY_PREVIOUS`. Reiniciar la API (los enlaces siguen funcionando: la búsqueda prueba ambas llaves de hash).
 2. Ejecutar `python -m app rotate-keys` (misma imagen, usuario de ejecución). En una transacción, con las filas bloqueadas, descifra **cada** copia (también las revocadas), la vuelve a cifrar con la llave actual y recalcula el HMAC. Es idempotente y solo imprime conteos. Si una copia no se puede descifrar, no cambia nada.

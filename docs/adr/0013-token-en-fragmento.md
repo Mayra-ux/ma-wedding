@@ -31,10 +31,7 @@ El ADR 0008 definió el enlace como `https://[dominio]/i/<token>` y exige que "l
 - Si el invitado guarda un marcador después de `replaceState`, el marcador no lleva el token, así que debe volver a abrir el enlace de WhatsApp. Al recargar en la misma pestaña, el token se recupera de `sessionStorage`.
 - El token sigue en el historial local del navegador y en el chat de WhatsApp; eso no cambia respecto al ADR 0008.
 
-## Regla de envío hasta tener dominio (3 nov 2026)
-
-- **Ningún enlace real se envía a invitados hasta definir el dominio definitivo.** El dominio queda escrito dentro de cada enlace (`https://[dominio]/#t=<token>`): un cambio posterior dejaría los enlaces ya enviados apuntando al dominio anterior.
-- Mientras tanto, los enlaces solo se generan con invitaciones ficticias: en local con `http://localhost:8080` y en pruebas en la nube con `https://ma-wedding-six.vercel.app` (`INVITATION_ORIGIN`, doc 11).
+> Envío de enlaces hasta tener dominio definitivo: ver ADR 0021.
 
 ## Pendientes
 

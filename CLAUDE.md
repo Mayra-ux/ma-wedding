@@ -105,7 +105,7 @@ Importación repetible del Excel de la planner con código INV como llave; al re
 Recordatorios y envío de enlaces: manuales por WhatsApp desde el panel.
 Retención: alergias y teléfonos se borran el 5 abr 2027 (también en el historial); el resto de datos personales el 4 jun 2027. Los respaldos vencen en esas mismas fechas. La exportación final descargada contiene teléfonos y alergias: ese archivo se borra o se reemplaza por una versión sin esas columnas el 5 abr 2027.
 
-Pendientes (no asumir): canal de contacto, texto del aviso de privacidad y responsable de los datos, aprobación visual de I-5 (alergias, aviso, estados), proveedor de hosting, dominio.
+Pendientes (no asumir): canal de contacto, texto del aviso de privacidad y responsable de los datos, aprobación visual de I-5 (alergias, aviso, estados), proveedor de hosting, dominio; hasta definirlo, no se envía ningún enlace real a invitados (ADR 0021).
 
 5. Forma de trabajo
 Trabajamos por fases. No avances a la siguiente fase sin autorización explícita de Mayra.
