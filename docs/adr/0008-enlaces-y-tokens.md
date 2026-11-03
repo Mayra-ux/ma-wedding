@@ -1,7 +1,9 @@
 # ADR 0008 — Enlaces y tokens de invitación
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0013
 - **Fecha:** 2026-11-02
+
+> Nota: el formato del enlace (`/i/<token>`) y las reglas de las páginas `/i/` quedan reemplazados por el ADR 0013 (`https://[dominio]/#t=<token>`). El resto de este ADR sigue vigente.
 
 ## Contexto
 

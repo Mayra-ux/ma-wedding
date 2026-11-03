@@ -99,6 +99,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .gift-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:18px}
 .copied{font-size:16px;font-style:italic;color:var(--esmeralda);min-height:1.4em}
 
+/* Nota: evento para adultos */
+.adults{margin-top:40px;width:100%;max-width:640px;display:flex;flex-direction:column;align-items:center;gap:12px;padding:30px clamp(18px,4vw,40px) 26px;border-top:1px solid rgba(184,150,79,.55);border-bottom:1px solid rgba(184,150,79,.55);background:rgba(233,214,166,.18);position:relative}
+.adults .emblem{position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center}
+.adults .emblem img{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
+.adults .emblem svg{position:relative;width:18px;height:18px;color:var(--oro);filter:drop-shadow(0 0 4px rgba(209,174,102,.9));animation:twinkle 3.4s ease-in-out infinite}
+.adults p{margin:0;font-style:italic;font-size:clamp(19px,2.3vw,22px);line-height:1.55;color:var(--tinta-2);max-width:52ch}
+.adults .small{font-family:var(--f-display);font-size:12px;letter-spacing:.3em;font-weight:600;color:var(--esmeralda);display:flex;align-items:center;gap:12px}
+.adults .small::before,.adults .small::after{content:"";width:28px;height:1px;background:var(--oro-viejo)}
+
 .eyebrow{font-family:var(--f-display);font-size:12px;letter-spacing:.42em;font-weight:600;color:var(--oro-texto)}
 .h2{font-family:var(--f-display);font-size:clamp(30px,5vw,46px);line-height:1.1;margin-top:12px;color:var(--esmeralda)}
 .center{text-align:center;display:flex;flex-direction:column;align-items:center}
@@ -443,6 +452,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div class="sw"><span class="dot tbd">?</span><strong>COLOR DEL NOVIO</strong><span class="t">Por definir</span></div>
         <div class="sw"><span class="dot" style="background:#474A51"></span><strong>GRIS OXFORD</strong><span class="t">Reservado para los caballeros del novio</span></div>
         <div class="sw no"><span class="dot red" role="img" aria-label="Círculo rojo tachado"></span><strong>ROJO</strong><span class="tag">COLOR NO PERMITIDO</span><span class="t">No uses prendas ni accesorios en rojo</span></div>
+      </div>
+      <div class="adults">
+        <span class="emblem" aria-hidden="true"><img src="orn-anillo.svg" alt=""><svg><use href="#star"/></svg></span>
+        <p>Con mucho cariño, hemos preparado esta celebración para disfrutarla entre adultos. Agradecemos de corazón su comprensión y esperamos compartir con ustedes este día tan especial.</p>
+        <span class="small">EVENTO EXCLUSIVO PARA ADULTOS</span>
       </div>
     </div>
   </div>

@@ -1,7 +1,9 @@
 # ADR 0012 — Ornamentos del paquete TotK
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0014
 - **Fecha:** 2026-11-02
+
+> Nota: la definición de "donde ya están" queda reemplazada por la lista cerrada de usos permitidos del ADR 0014, que incluye el emblema de la nota de adultos en `#vestimenta`. El resto de este ADR sigue vigente.
 
 ## Contexto
 

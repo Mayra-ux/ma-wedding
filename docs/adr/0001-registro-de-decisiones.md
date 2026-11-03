@@ -39,3 +39,5 @@ Registrar cada decisión relevante como un ADR (Architecture Decision Record) en
 | 0010 | Datos personales y retención |
 | 0011 | Estados de la sección RSVP en la invitación |
 | 0012 | Ornamentos del paquete TotK |
+| 0013 | Token de invitación en el fragmento de la URL (reemplaza parcialmente al 0008) |
+| 0014 | Usos permitidos de los ornamentos del paquete TotK (reemplaza parcialmente al 0012) |

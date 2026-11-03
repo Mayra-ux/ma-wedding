@@ -57,7 +57,7 @@ Reglas visuales permanentes:
 
 Sin rojo en todo el diseño, salvo el círculo rojo tachado del código de vestimenta.
 No usar marcas ni arte oficial de Nintendo: Trifuerza, logotipos de Zelda, escudo hyliano, símbolos de los Sabios, alfabeto zonai, íconos del juego. La temática se evoca con ornamentos propios, la espada del monograma y el lenguaje de leyenda.
-Ornamentos (decidido por los novios, 2 nov 2026): se conservan los tres orn-*.svg actuales del paquete TotK, por decisión consciente de Mayra. Úsalos solo donde ya están: no agregues más piezas de ese paquete ni otros elementos oficiales del juego.
+Ornamentos (decidido por los novios, 2 nov 2026; ADR 0012 y ADR 0014): se conservan los tres orn-*.svg actuales del paquete TotK, por decisión consciente de Mayra. Usos permitidos, exactamente los del diseño aprobado: ornamentos de fondo con parallax en Portada (meandro, espirales), Aventura (anillo), El gran día (espirales), El camino (meandro, anillo), Itinerario (espirales), Vestimenta (meandro), Mesa de regalos (anillo), Confirmar (espirales) y Cierre (anillo, espirales), más el emblema de orn-anillo.svg en la nota de adultos de Vestimenta. No agregues más piezas de ese paquete ni otros elementos oficiales del juego, y no uses estas tres en lugares nuevos.
 Los lugares "2" del RSVP son un valor de demostración, no un dato: se sustituirán por el dato de la API en la fase I-5.
 No usar hojas ni ornamentos vegetales.
 No usar fotos de stock ni generadas por IA. Las fotos de la sesión de pareja llegarán después; no prepares galería hasta que se pida.
