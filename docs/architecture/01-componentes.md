@@ -1,6 +1,6 @@
 # 1. Componentes
 
-Basado en ADR 0002, 0003, 0004, 0005, 0010 y 0013.
+Basado en ADR 0002, 0004, 0005, 0010, 0013, 0015, 0019 y 0020.
 
 ## Diagrama general
 
@@ -11,35 +11,38 @@ flowchart LR
     ADM["Novios / planner<br/>navegador"]
   end
 
-  subgraph Estatico["Hosting estático"]
+  subgraph Estatico["Hosting estático (Root Directory = invitacion/)"]
     WEB["Invitación<br/>index.html vanilla<br/>siempre en /"]
-    PANEL["Panel admin<br/>React + Vite compilado"]
   end
 
-  subgraph PaaS["PaaS de contenedores"]
-    API["API FastAPI<br/>imagen Docker"]
+  subgraph PaaS["PaaS de contenedores (una imagen Docker)"]
+    API["API FastAPI<br/>/api/v1"]
+    PANEL["Panel React + Vite compilado<br/>servido en /admin/ por la API"]
     JOB["Tarea de borrado<br/>misma imagen, otro comando"]
     BKP["Tarea de respaldo"]
   end
 
   subgraph Privada["Red privada"]
-    DB[("PostgreSQL<br/>administrado<br/>sin acceso público")]
+    DB[("PostgreSQL administrado<br/>sin acceso público, TLS<br/>usuarios: migraciones y ejecución")]
   end
 
   GOOGLE["Google<br/>inicio de sesión OIDC"]
   STORE[("Almacenamiento externo<br/>respaldos cifrados<br/>fuera del proveedor")]
   WA["WhatsApp<br/>envío manual"]
+  ALERT["Canal de alertas<br/>pendiente"]
 
   INV -- "abre / con t=token en el fragmento" --> WEB
-  WEB -- "HTTPS, token en el cuerpo" --> API
-  ADM --> PANEL
-  PANEL -- "HTTPS, cookie de sesión + CSRF" --> API
+  WEB -- "HTTPS, CORS sin credenciales, token en el cuerpo" --> API
+  ADM -- "HTTPS, mismo origen" --> PANEL
+  PANEL -- "cookie de sesión + CSRF" --> API
   API -- "redirección de login" --> GOOGLE
   API --> DB
   JOB --> DB
   BKP --> DB
   BKP -- "volcado cifrado" --> STORE
-  ADM -. "copia mensaje o abre wa.me" .-> WA
+  JOB -. "falla o informe" .-> ALERT
+  BKP -. "falla o informe" .-> ALERT
+  ADM -. "botón WhatsApp abre wa.me" .-> WA
   WA -. "enlace con t=token en el fragmento" .-> INV
 ```
 
@@ -47,20 +50,20 @@ flowchart LR
 
 | Componente | Responsabilidad | ADR |
 |---|---|---|
-| **Invitación** | Página pública estática y sin framework. Lee el token del fragmento, consulta y guarda la respuesta. Sin token, muestra todo menos el formulario | 0002, 0011, 0013 |
-| **Panel admin** | Aplicación React + Vite para novios y planner: invitaciones, enlaces, importación, exportación, recordatorios, estadísticas | 0003 |
-| **API FastAPI** | Única puerta a los datos. Valida todas las reglas, autentica, autoriza, audita, cifra y busca tokens | 0002, 0005, 0008 |
-| **PostgreSQL** | Persistencia y restricciones de integridad. Solo accesible desde la red privada, con un usuario de privilegios mínimos | 0002, 0004 |
-| **Tarea de borrado** | Ejecuta la purga del 5 abr y del 4 jun 2027 de forma idempotente | 0010 |
-| **Tarea de respaldo** | Volcado diario cifrado hacia un almacenamiento fuera del proveedor, con vencimientos | 0004, 0010 |
-| **Google** | Identidad de los administradores. Solo se aceptan correos de las listas configuradas | 0005 |
-| **WhatsApp** | Canal manual. El sistema no envía mensajes; el panel prepara el texto o un enlace `wa.me` | 0003 |
+| **Invitación** | Página pública estática y sin framework, en `invitacion/`. Lee el token del fragmento, consulta y guarda la respuesta. Sin token, muestra todo menos el formulario | 0002, 0011, 0013, 0016, 0020 |
+| **API FastAPI** | Única puerta a los datos. Valida las reglas, autentica, autoriza, audita, cifra y busca tokens. Además **sirve el panel compilado** en `/admin/` | 0002, 0005, 0008, 0015, 0019 |
+| **Panel admin** | React + Vite con build propio y enrutado por hash, incluido en la imagen de la API: invitaciones, enlaces, importación, exportación, recordatorios, estadísticas | 0003, 0015, 0017 |
+| **PostgreSQL** | Persistencia y restricciones. Red privada, TLS, usuario de migraciones separado del de ejecución | 0002, 0004, 0019 |
+| **Tarea de borrado** | Purga del 5 abr y del 4 jun 2027; idempotente; informe de conteos y alerta si falla | 0010, 0019 |
+| **Tarea de respaldo** | Volcado diario cifrado fuera del proveedor, con vencimientos; alerta si falla | 0004, 0010, 0019 |
+| **Google** | Identidad de los administradores (listas de correos) | 0005 |
+| **WhatsApp** | Canal manual: el panel abre `wa.me` al teléfono principal o al contacto alterno y marca el enlace como enviado | 0003, 0017 |
 
 ## Orígenes y límites de confianza
 
-- **Invitación** y **panel** son orígenes distintos de la API. La API permite CORS solo a esos dos orígenes, configurados por variable de entorno.
-- **Sugerencia:** servir panel y API como subdominios del mismo dominio propio (p. ej. `panel.[dominio]` y `api.[dominio]`). Así la cookie de sesión es del mismo sitio y puede usar `SameSite=Lax` o `Strict`. Depende del dominio (pendiente).
-- **Límite de confianza 1:** todo lo que llega de la invitación es anónimo, salvo el token. La API trata el token como la única credencial del invitado.
-- **Límite de confianza 2:** el panel solo opera con una sesión válida de un correo autorizado; la API verifica el rol en cada petición.
-- **Límite de confianza 3:** la base de datos no es accesible desde internet. Solo la API y las tareas (misma imagen) se conectan.
-- **Fuera del sistema:** las exportaciones descargadas y los mensajes de WhatsApp quedan fuera de su control (ver [10-respaldos.md](10-respaldos.md) y ADR 0010).
+- **Dos orígenes:** la invitación (hosting estático) y la API, que incluye el panel.
+- **CORS:** solo la API pública acepta el origen de la invitación, **sin credenciales**. El panel no usa CORS porque es el mismo origen (ADR 0015).
+- **Límite 1:** lo que llega de la invitación es anónimo salvo el token, que es la única credencial del invitado.
+- **Límite 2:** el panel solo opera con una sesión válida de un correo autorizado; el rol se verifica en cada petición.
+- **Límite 3:** la DB no es accesible desde internet; solo se conectan la API y las tareas de la misma imagen, por TLS.
+- **Fuera del sistema:** exportaciones descargadas y mensajes de WhatsApp (ver ADR 0010 y [10-respaldos.md](10-respaldos.md)).

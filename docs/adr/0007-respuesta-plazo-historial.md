@@ -1,7 +1,9 @@
 # ADR 0007 — Respuesta, plazo e historial
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0016
 - **Fecha:** 2026-11-02
+
+> Nota: el instante de cierre, los límites del desbloqueo, las respuestas del admin y el congelamiento quedan definidos por el ADR 0016. El resto de este ADR sigue vigente.
 
 ## Contexto
 

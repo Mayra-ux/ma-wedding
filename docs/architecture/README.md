@@ -5,7 +5,7 @@ Diseño conceptual del sistema RSVP de la invitación (Fase 2). Describe **qué*
 ## Fuentes
 
 - [CLAUDE.md](../../CLAUDE.md): contexto permanente, diseño congelado y reglas del proyecto.
-- [ADRs 0001–0013](../adr/): decisiones aceptadas. Si este documento y un ADR difieren, **manda el ADR**, y la diferencia se resuelve con un ADR nuevo.
+- [ADRs 0001–0020](../adr/): decisiones aceptadas. Si este documento y un ADR difieren, **manda el ADR**, y la diferencia se resuelve con un ADR nuevo.
 
 ## Convenciones
 
@@ -18,6 +18,7 @@ Diseño conceptual del sistema RSVP de la invitación (Fase 2). Describe **qué*
 - **Datos:** todos los ejemplos son ficticios (`INV-001`, "Familia Ejemplo"). Nunca se usan datos reales (ADR 0010).
 - **Diagramas:** Mermaid; se ven en GitHub y en la vista previa de Markdown de VS Code.
 - **Enlace de invitación:** `https://[dominio]/#t=<token>` (ADR 0013).
+- **Sugerencia aceptada:** propuesta del diseño aprobada por Mayra; se trata como regla.
 
 ## Mapa de documentos
 
@@ -35,8 +36,10 @@ Diseño conceptual del sistema RSVP de la invitación (Fase 2). Describe **qué*
 | 10 | [10-respaldos.md](10-respaldos.md) | Respaldos, restauración y vencimientos alineados con el borrado |
 | 11 | [11-despliegue.md](11-despliegue.md) | Imagen Docker única, variables de entorno y comparación de opciones de hosting |
 | 12 | [12-riesgos-y-preguntas.md](12-riesgos-y-preguntas.md) | Riesgos y preguntas abiertas |
+| 13 | [13-fases-implementacion.md](13-fases-implementacion.md) | Fases I-1 a I-10 y sus criterios de aceptación |
 
 ## Estado
 
-- Fase 2: documentación conceptual. Nada de esto está implementado.
+- Fases 2 y 3 (diseño y validación): documentación conceptual. Nada de esto está implementado.
+- Siguiente: I-1, sujeta a autorización y a la aprobación de las herramientas (Q15).
 - Ningún cambio visual a la invitación se aplica sin la aprobación de la fase I-5 (ADR 0011).

@@ -41,3 +41,9 @@ Registrar cada decisión relevante como un ADR (Architecture Decision Record) en
 | 0012 | Ornamentos del paquete TotK |
 | 0013 | Token de invitación en el fragmento de la URL (reemplaza parcialmente al 0008) |
 | 0014 | Usos permitidos de los ornamentos del paquete TotK (reemplaza parcialmente al 0012) |
+| 0015 | Panel servido por la propia API, mismo origen (reemplaza parcialmente al 0003) |
+| 0016 | Plazo, desbloqueo y congelamiento del RSVP (reemplaza parcialmente al 0007 y al 0011) |
+| 0017 | Reglas de invitación, catálogos y permisos del panel (reemplaza parcialmente al 0005 y al 0006) |
+| 0018 | Importación y exportación: formatos y simplificación (reemplaza parcialmente al 0009) |
+| 0019 | Endurecimiento de seguridad y operación (complementa al 0004, 0005, 0008, 0010 y 0015) |
+| 0020 | Estructura del repositorio |

@@ -1,7 +1,9 @@
 # ADR 0006 — Modelo de invitación y pases
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0017
 - **Fecha:** 2026-11-02
+
+> Nota: el ADR 0017 define varios roles por invitación, los valores de los catálogos, las longitudes máximas y el archivado en vez del borrado. El resto de este ADR sigue vigente.
 
 ## Contexto
 

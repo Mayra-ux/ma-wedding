@@ -1,6 +1,6 @@
 # 4. Flujos del panel administrativo
 
-Basado en ADR 0003, 0005, 0007, 0008/0013, 0009 y 0010. Todas las peticiones del panel llevan la cookie de sesión y, si modifican datos, el encabezado CSRF ([06-autenticacion-autorizacion.md](06-autenticacion-autorizacion.md)). Toda acción relevante genera un evento de auditoría.
+Basado en ADR 0003/0015, 0005, 0007/0016, 0008/0013, 0009/0018, 0010, 0017 y 0019. El panel lo sirve la API (mismo origen). Las escrituras llevan cookie de sesión y `X-CSRF-Token` ([06](06-autenticacion-autorizacion.md)). Toda acción relevante genera un evento de auditoría sin datos personales. Después del congelamiento (7 mar 2027) solo se permite leer y exportar.
 
 ## 4.1 El admin desbloquea una invitación
 
@@ -13,15 +13,20 @@ sequenceDiagram
   participant D as PostgreSQL
 
   N->>P: Abre INV-014, que pidió cambiar su respuesta tarde
-  P->>A: POST unlock para INV-014 con desbloqueo hasta el 10 feb 23:59
+  P->>A: POST unlock para INV-014 hasta el 10 feb 23:59
   A->>A: Sesión válida, rol novios, CSRF válido
-  A->>A: La fecha es futura y el RSVP no está congelado
-  A->>D: Guarda desbloqueada_hasta y el evento de auditoría
-  A-->>P: 200 invitación desbloqueada hasta el 10 feb
+  alt Plazo aún abierto
+    A-->>P: 409 plazo_aun_abierto
+  else Fecha posterior al congelamiento
+    A-->>P: 422 mas_alla_del_congelamiento
+  else Válido
+    A->>D: Guarda desbloqueada_hasta y el evento de auditoría
+    A-->>P: 200 desbloqueada hasta el 10 feb
+  end
   Note over A: Hasta esa fecha, lookup devuelve estado abierta para INV-014
 ```
 
-Con rol planner, la API responde `403`. Después del congelamiento previo al borrado no se puede desbloquear (**sugerencia aceptada**, regla C6 de [05-reglas-de-negocio.md](05-reglas-de-negocio.md)).
+Con rol planner, la API responde `403`. Tras el congelamiento, `409 rsvp_congelado` (ADR 0016).
 
 ## 4.2 El admin crea una invitación, genera su enlace y lo envía por WhatsApp
 
@@ -34,26 +39,27 @@ sequenceDiagram
   participant D as PostgreSQL
   participant WA as WhatsApp
 
-  N->>P: Nueva invitación, Familia Ejemplo, 2 adultos, 1 niño, teléfono
+  N->>P: Nueva invitación, Familia Ejemplo, 2 adultos, 1 niño, roles, teléfono
   P->>A: POST invitations
-  A->>A: Valida adultos ≥ 1, catálogos y teléfono, normaliza a +52
+  A->>A: Valida adultos ≥ 1, catálogos, longitudes, teléfono +52
   A->>D: Crea la invitación con el código INV-034 y pases 3
   A-->>P: 201 INV-034
   N->>P: Generar enlace
   P->>A: POST link para INV-034
-  A->>A: Verifica que no requiera revisión
-  A->>A: Genera 128 bits aleatorios, calcula el hash y cifra la copia
+  A->>A: Verifica que no esté en revisión ni archivada
+  A->>A: Genera 128 bits, calcula el HMAC y cifra la copia con AES-256-GCM
   A->>D: Guarda el enlace activo y el evento de auditoría
-  A-->>P: 201 enlace https://dominio/ con fragmento t=token
-  N->>P: Preparar mensaje de WhatsApp
-  P->>A: GET whatsapp-message para INV-034
-  A-->>P: Texto del mensaje y enlace wa.me con el teléfono +52
-  N->>WA: Abre wa.me o pega el mensaje y lo envía manualmente
+  A-->>P: 201 enlace con t=token en el fragmento
+  N->>P: Botón WhatsApp, teléfono principal o contacto alterno
+  P->>P: Arma el texto con la plantilla y el enlace wa.me
+  P->>A: POST link sent con origen whatsapp
+  A->>D: Marca el enlace como enviado, con fecha
+  P->>WA: Abre wa.me, los novios envían el mensaje manualmente
 ```
 
-El texto del mensaje de WhatsApp lo definen los novios; no se inventa. Queda como pendiente.
+Si la invitación no tiene teléfono, el panel muestra un aviso y permite copiar el mensaje y marcarlo como enviado a mano. La plantilla del mensaje está pendiente (Q9).
 
-## 4.3 El admin regenera o revoca un enlace
+## 4.3 El admin regenera, revoca o archiva
 
 ```mermaid
 sequenceDiagram
@@ -66,19 +72,22 @@ sequenceDiagram
   alt Regenerar
     N->>P: Regenerar el enlace de INV-034
     P->>A: POST link regenerate
-    A->>D: Transacción: revoca el enlace activo y crea uno nuevo
+    A->>D: Transacción: revoca el activo, crea uno nuevo, reinicia la marca de enviado
     A-->>P: 201 enlace nuevo
-    Note over A: El token anterior responde 404 enlace_no_valido de inmediato
   else Revocar sin reemplazo
-    N->>P: Revocar el enlace de INV-034
     P->>A: POST link revoke
-    A->>D: Marca la fecha de revocación del enlace activo
+    A->>D: Marca la fecha de revocación
     A-->>P: 200 sin enlace activo
+  else Archivar la invitación
+    P->>A: POST archive
+    A->>D: Transacción: archivada_en = ahora, revoca el enlace
+    A-->>P: 200 archivada, fuera de conteos y exportaciones
   end
-  A->>D: Evento de auditoría en ambos casos
+  A->>D: Evento de auditoría
+  Note over A: El token anterior responde 404 enlace_no_valido de inmediato
 ```
 
-## 4.4 Importación del Excel de la planner con filas en revisión
+## 4.4 Importación del Excel de la planner (sin estado)
 
 ```mermaid
 sequenceDiagram
@@ -88,37 +97,26 @@ sequenceDiagram
   participant A as API
   participant D as PostgreSQL
 
-  N->>P: Sube el archivo de la planner en xlsx o csv
-  P->>A: POST imports con el archivo
+  N->>P: Sube el archivo xlsx o csv
+  P->>A: POST imports preview con el archivo
   A->>A: Lee columnas, con o sin Código INV al inicio
   loop Cada fila
-    A->>A: Normaliza teléfonos, mapea Invitado de al catálogo de lado
-    A->>A: Rol desde la columna Rol, si no existe desde Comentario
+    A->>A: Normaliza teléfonos, mapea Invitado de a Novia, Novio o Ambos
+    A->>A: Rol desde la columna Rol separada por punto y coma, o desde Comentario si coincide exacto
     A->>A: Ignora Asistirá, Pases confirmados, Mensaje y Alergias
-    alt Código INV existente
-      A->>A: Resultado actualización
-    else Sin código
-      A->>A: Resultado alta, asigna un código nuevo
-    else Código desconocido
-      A->>A: Resultado error de fila
-    end
-    alt Pases del Excel distinto de adultos + niños, lado o teléfono inválido
-      A->>A: Marca requiere revisión con su motivo
-    end
+    A->>A: Clasifica en alta, actualización o error de código desconocido
+    A->>A: Revisión si Pases del Excel distinto de adultos + niños, lado o teléfono inválido
+    A->>A: Avisos de nombre duplicado o teléfono faltante
   end
-  A->>D: Guarda el lote en estado vista previa con el resultado por fila
-  A-->>P: Resumen de altas, actualizaciones, errores y revisión
-  N->>P: Revisa y confirma la aplicación
-  P->>A: POST imports apply
-  A->>D: Transacción: aplica altas y actualizaciones, sin borrar nada
-  A->>D: Evento de auditoría
-  A-->>P: 200 lote aplicado e invitaciones del sistema que no venían en el archivo
-  Note over P: Las invitaciones en revisión no pueden generar enlace hasta corregirse
+  A-->>P: Resultado por fila, sin escribir nada en la DB
+  N->>P: Revisa y confirma
+  P->>A: POST imports apply con el mismo archivo
+  A->>D: Transacción: aplica altas y actualizaciones, guarda Pases original, sin borrar nada
+  A->>D: Evento de auditoría con los conteos
+  A-->>P: Resumen e invitaciones del sistema que no venían en el archivo
 ```
 
-La vista previa antes de aplicar es una **sugerencia aceptada** que complementa al ADR 0009: evita aplicar un archivo equivocado.
-
-Si una fila reimportada marca para revisión una invitación que **ya tiene enlace activo**, el enlace sigue funcionando y el panel solo muestra un aviso. La marca impide generar o regenerar el enlace hasta corregirla (**sugerencia aceptada**, regla E13).
+Si una invitación con enlace activo queda en revisión, el enlace sigue funcionando y el panel avisa (regla D7). La marca de revisión se quita sola cuando se corrige la inconsistencia (ADR 0018).
 
 ## 4.5 Exportación
 
@@ -132,16 +130,18 @@ sequenceDiagram
 
   U->>P: Exportar la lista
   P->>A: POST exports con formato xlsx o csv
-  A->>A: Sesión válida, rol novios o planner, CSRF válido
-  A->>D: Lee invitaciones, respuestas vigentes y catálogos
-  A->>A: Arma las columnas Código INV, las 14 de la planner, Mensaje, Grupo, Rol, Alergias
-  A->>A: Neutraliza celdas que empiezan con = + - o @
-  A->>D: Evento de auditoría con quién y cuándo, sin el contenido
+  A->>A: Sesión, rol y CSRF válidos
+  A->>D: Lee las invitaciones no archivadas, sus respuestas vigentes y roles
+  alt Rol novios
+    A->>A: 19 columnas, Código INV, 14 de la planner, Mensaje, Grupo, Rol, Alergias
+  else Rol planner
+    A->>A: 18 columnas, sin Mensaje del invitado
+  end
+  A->>A: Pases calculado, Asistirá Sí, No o vacío, neutraliza fórmulas
+  A->>D: Evento de auditoría con quién y cuándo
   A-->>P: Archivo para descargar
   Note over U: El archivo sale del sistema y su borrado sigue el ADR 0010
 ```
-
-Antes del 5 abr la exportación incluye teléfonos y alergias. Después, esas columnas salen vacías porque los datos ya no existen.
 
 ## 4.6 Borrado programado del 5 abr y del 4 jun 2027
 
@@ -151,23 +151,23 @@ sequenceDiagram
   participant S as Programador del hosting
   participant J as Tarea de borrado
   participant D as PostgreSQL
-  participant B as Respaldos externos
+  participant L as Canal de alertas
 
-  Note over S,J: Se ejecuta a diario, es idempotente y lee las fechas de la configuración
+  Note over S,J: Diaria, idempotente, lee las fechas de la configuración, usuario de ejecución
   S->>J: Ejecuta el comando purge
   J->>D: Lee las fechas de borrado y la fecha actual
   alt Hoy ≥ 5 abr 2027
-    J->>D: Transacción: borra los teléfonos de Invitación
-    J->>D: Borra las alergias de Respuesta y de Versión de respuesta
-    J->>D: Evento de auditoría con conteos, sin datos
+    J->>D: Transacción: borra teléfonos de Invitación y alergias de todas las versiones
   end
   alt Hoy ≥ 4 jun 2027
-    J->>D: Transacción: borra invitaciones, respuestas, versiones, enlaces
-    J->>D: Borra sesiones, lotes, filas de importación y auditoría
+    J->>D: Transacción: borra invitaciones, incluidas las archivadas, versiones, roles, enlaces, sesiones y auditoría
   end
-  J-->>S: Registro con conteos únicamente
-  Note over B: Los respaldos vencen en las mismas fechas (10-respaldos.md)
+  alt Error
+    J->>L: Alerta con el paso que falló, sin datos personales
+  else Éxito
+    J->>L: Informe de conteos por tipo
+  end
   Note over S,D: Luego se apagan la API y la DB (paso manual)
 ```
 
-Pasos previos manuales, antes del 5 abr: congelar el RSVP, hacer la exportación final y el respaldo final. El 5 abr hay que borrar la exportación final descargada o reemplazarla por una versión sin teléfonos ni alergias (ADR 0010).
+Previo: congelamiento el 7 mar 2027 00:00; exportación y respaldo finales antes del 5 abr. El 5 abr hay que borrar la exportación final descargada o reemplazarla por una versión sin teléfonos ni alergias (ADR 0010).

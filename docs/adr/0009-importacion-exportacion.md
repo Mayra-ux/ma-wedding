@@ -1,7 +1,9 @@
 # ADR 0009 — Importación y exportación en formato de la planner
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0018
 - **Fecha:** 2026-11-02
+
+> Nota: los formatos de columnas, el rol desde Comentario, la marca de revisión, los duplicados, la importación sin estado y la exportación de la planner quedan definidos por el ADR 0018. El resto de este ADR sigue vigente.
 
 ## Contexto
 

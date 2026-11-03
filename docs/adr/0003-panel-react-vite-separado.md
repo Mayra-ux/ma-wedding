@@ -1,7 +1,9 @@
 # ADR 0003 — Panel administrativo separado con React + Vite
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0015
 - **Fecha:** 2026-11-02
+
+> Nota: el despliegue del panel queda reemplazado por el ADR 0015: sus archivos compilados los sirve la propia API (mismo origen) y usa enrutado por hash. El resto de este ADR sigue vigente.
 
 ## Contexto
 

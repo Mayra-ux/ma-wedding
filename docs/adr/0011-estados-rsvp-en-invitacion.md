@@ -1,7 +1,9 @@
 # ADR 0011 — Estados de la sección RSVP en la invitación
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0016
 - **Fecha:** 2026-11-02
+
+> Nota: la tabla de estados (que agrega "congelada") y la fecha del mensaje (c) quedan reemplazadas por el ADR 0016. El resto de este ADR sigue vigente.
 
 ## Contexto
 

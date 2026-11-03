@@ -1,7 +1,9 @@
 # ADR 0005 — Acceso al panel con Google y roles
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0017
 - **Fecha:** 2026-11-02
+
+> Nota: el alcance de lectura de la planner queda precisado por el ADR 0017: ve alergias pero no los mensajes del invitado, y no ve enlaces ni la auditoría. El resto de este ADR sigue vigente.
 
 ## Contexto
 

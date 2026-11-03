@@ -1,10 +1,10 @@
 # 10. Respaldos y restauración
 
-Basado en ADR 0004 y 0010.
+Basado en ADR 0004, 0010 y 0019.
 
 ## Qué se respalda
 
-- La base de datos PostgreSQL completa: invitaciones, respuestas, historial, enlaces (hash + copia cifrada), auditoría, lotes y configuración.
+- La base de datos PostgreSQL completa: invitaciones, respuestas, historial, enlaces (HMAC + copia cifrada), roles, auditoría y configuración.
 - **No** se respaldan junto a la base:
   - La **llave de cifrado de tokens**: vive en el gestor de secretos del hosting y se guarda aparte. Un respaldo filtrado sin la llave no permite reconstruir los enlaces.
   - Las **listas de correos** ni otros secretos: son configuración, no datos.
@@ -15,9 +15,11 @@ Basado en ADR 0004 y 0010.
 | Aspecto | Diseño |
 |---|---|
 | Frecuencia | Un volcado lógico diario (formato estándar de PostgreSQL, portable entre proveedores) |
-| Cifrado | Se cifra **antes** de salir del entorno, con una llave de respaldo distinta de la de tokens, guardada fuera del proveedor |
+| Cifrado | Se cifra **antes** de salir del entorno, con una llave de respaldo distinta de las de tokens, guardada fuera del proveedor |
+| Conexión | Por TLS, con el usuario de ejecución (lectura suficiente para el volcado) |
 | Destino | Almacenamiento de objetos **fuera del proveedor del PaaS y del Postgres** (ADR 0004) |
-| Ejecución | Tarea programada con la misma imagen Docker o con el mecanismo del hosting; registra solo el éxito, el tamaño y la fecha |
+| Ejecución | Mecanismo del proveedor si permite cifrado propio y vencimiento por fecha absoluta (simplificación aceptada); si no, el comando `backup` de la misma imagen |
+| Alertas | Si el respaldo falla, alerta al canal definido (pendiente); cada ejecución deja un informe con éxito, tamaño y fecha, sin datos personales (ADR 0019) |
 | Respaldos del proveedor | Si el Postgres administrado hace sus propios respaldos o restauraciones a un punto en el tiempo, su retención también se ajusta a las fechas de abajo |
 
 ## Vencimientos (alineados con el borrado)
@@ -48,7 +50,7 @@ El inicio de las barras es ilustrativo: depende de cuándo arranque el sistema.
 
 ## Respaldo y exportación finales
 
-1. Antes del 5 abr 2027: congelar el RSVP, hacer la **exportación final** y el **respaldo final**.
+1. El RSVP se congela el **7 mar 2027 00:00** (ADR 0016). Antes del 5 abr 2027 se hacen la **exportación final** y el **respaldo final**.
 2. El respaldo final contiene teléfonos y alergias, así que **vence el 5 abr**, como cualquier otro.
 3. La exportación final descargada se borra o se reemplaza por una versión sin teléfonos ni alergias el **5 abr 2027** (ADR 0010). Este paso es manual de los novios y la planner.
 4. Después del 4 jun no queda ningún respaldo con datos personales.

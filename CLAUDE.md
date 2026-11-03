@@ -46,7 +46,7 @@ II · Nuestra aventura comienza — capitular "É", "Es peligroso ir solo… aco
 III · El gran día — escena esmeralda, cuenta regresiva en vivo (2027-03-06T13:00-06:00), calendario de marzo 2027 con el 6 marcado, botón a Google Calendar.
 El camino — tarjetas en arco: IV Ceremonia (esmeralda) y V Recepción (marfil), botones "CÓMO LLEGAR".
 La travesía · Itinerario — línea de tiempo; solo Ceremonia 1:00 p. m. y Recepción 4:00 p. m. son datos reales; el resto son placeholders punteados.
-VI · Código de vestimenta — "[ FORMALIDAD POR CONFIRMAR ]", tarjetas de colores (esmeralda, novia, novio por definir, gris Oxford, rojo tachado con "COLOR NO PERMITIDO") y nota cálida de evento para adultos.
+VI · Código de vestimenta — "[ FORMALIDAD POR CONFIRMAR ]", tarjetas de colores (esmeralda, novia, novio por definir, gris Oxford, rojo tachado con "COLOR NO PERMITIDO") y nota cálida de evento para adultos (aprobada el 31 oct 2026 e insertada en index.html; emblema orn-anillo.svg con estrella, "EVENTO EXCLUSIVO PARA ADULTOS").
 Un presente · Mesa de regalos — Liverpool, número 60001357, botón copiar, botón a mesaderegalos.liverpool.com.mx.
 VII · ¿Te unes a la aventura? — formulario RSVP (hoy SIMULADO: no guarda nada).
 VIII · Cierre — monograma con espada, "Gracias por ser parte de nuestra leyenda".
@@ -70,7 +70,7 @@ Decidido (detalle y justificación en docs/adr/):
 Arquitectura: Alternativa A, aprobada. Invitación estática actual + API en contenedor Docker + PostgreSQL estándar (sin extensiones propietarias).
 API: FastAPI (Python).
 Invitación: sigue sin framework (HTML + CSS + JS vanilla, sin build). No la migres a React ni a otro framework. La conexión con el backend se hace con JavaScript vanilla sobre el formulario existente.
-Panel administrativo: aplicación aparte con React + Vite, solo para administradores.
+Panel administrativo: aplicación React + Vite con build propio, solo para administradores; sus archivos compilados los sirve la propia API (mismo origen) y usa enrutado por hash (ADR 0015).
 Acceso al panel: login con Google restringido a listas de correos en variables de entorno. Roles: novios = admin total; planner = solo lectura + exportación.
 Operación: PaaS de contenedores + Postgres administrado.
 Dominio: propio.
@@ -82,25 +82,25 @@ Sin decidir: proveedor del PaaS y del Postgres administrado, compra del dominio,
 Principios obligatorios:
 
 Portabilidad: nada atado a un proveedor; configuración por variables de entorno; Docker como mecanismo de portabilidad.
-Seguridad: tokens de invitación aleatorios ≥128 bits (guardar su hash para buscarlo y una copia cifrada con llave en variable de entorno para reenviarlo; un token por invitación), nunca IDs secuenciales públicos, toda validación en el servidor, rate limiting, admin con 2FA o login de Google restringido, cookies seguras + CSRF, DB no expuesta a internet, usuario de DB con privilegios mínimos, respaldos diarios cifrados fuera del proveedor.
+Seguridad: tokens de invitación aleatorios ≥128 bits (guardar su hash para buscarlo y una copia cifrada con llave en variable de entorno para reenviarlo; un token por invitación), nunca IDs secuenciales públicos, toda validación en el servidor, rate limiting, admin con login de Google restringido (ADR 0005), cookies seguras + CSRF, DB no expuesta a internet, usuario de DB con privilegios mínimos, respaldos diarios cifrados fuera del proveedor.
 Reglas ya claras: una sola respuesta vigente por invitación; lugares confirmados entre 1 y los asignados si asiste, 0 si no; el invitado nunca puede aumentar sus lugares.
 Niños: el evento es para adultos, CON excepciones decididas por los novios. Solo el admin puede autorizar niños en una invitación (cuántos y, si aplica, quiénes). El invitado nunca puede agregar niños. La nota de "evento exclusivo para adultos" de la invitación no cambia. El formato de la planner distingue: infante (<2 años, sin asiento ni alimentos) y niño (con asiento y alimentos).
 Acompañantes: una invitación puede incluir personas con nombre y lugares de acompañante sin nombre (pase adicional). Los novios asignan esos pases; el invitado no los aumenta.
 Teléfono: se guarda el teléfono principal (y opcionalmente un contacto alterno) para generar el mensaje de WhatsApp desde el panel. No se le pide al invitado.
-Rol en la boda (padrinos, damas, pajes, etc.): campo interno de la invitación/persona. El invitado no lo ve.
-Importación y exportación: el panel importa la lista en el formato Excel/CSV de la planner, validando inconsistencias (ej. # Pases ≠ adultos + niños), y exporta con esas mismas columnas: No., Nombre Invitado, # Pases, Teléfono, Contacto alterno, Tel. contacto alterno, Infante, Adultos, # Niños, Invitado de, ¿Asistirá?, Pases confirmados, # de mesa, Comentario.
+Rol en la boda (padrinos, damas, pajes, etc.): campo interno de la invitación, que admite uno o varios roles del catálogo (ADR 0017). El invitado no lo ve.
+Importación y exportación: el panel importa la lista en el formato Excel/CSV de la planner, validando inconsistencias (ej. # Pases ≠ adultos + niños). Columnas de la planner: No., Nombre Invitado, # Pases, Teléfono, Contacto alterno, Tel. contacto alterno, Infante, Adultos, # Niños, Invitado de, ¿Asistirá?, Pases confirmados, # de mesa, Comentario. La exportación lleva Código INV + esas 14 columnas + Mensaje del invitado, Grupo, Rol, Alergias; la exportación de la planner omite Mensaje del invitado (ADR 0009, ADR 0018).
 
 Datos reales de invitados — regla estricta: el repositorio es público. El Excel de la lista vive FUERA del repo (C:\Users\mayoa\OneDrive\Documentos\Repositorios\). No lo abras, no lo copies al repo y no pongas nombres ni teléfonos reales en código, pruebas, seeds, documentación ni commits. Los datos de desarrollo son siempre ficticios. *.xlsx y *.csv deben estar en .gitignore.
 
 La vista previa de WhatsApp no debe mostrar nombres de invitados.
-Plan post-boda: congelar RSVP, exportar, respaldo final, borrar datos personales en fecha acordada, apagar API/DB.
+Plan post-boda: congelar RSVP (domingo 7 mar 2027 00:00, −06:00), exportar, respaldo final, borrar datos personales en las fechas acordadas (5 abr y 4 jun 2027), apagar API/DB.
 
 Decisiones funcionales (detalle en docs/adr/):
 
-Invitación = familia o grupo, con nombre a mostrar, código interno no secreto (INV-###) y un token. Pases = adultos + niños autorizados; los infantes son informativos y no cuentan. Sin personas individuales en la v1: si hace falta identificar a un niño autorizado, va en la nota interna.
+Invitación = familia o grupo, con nombre a mostrar, código interno no secreto (INV-###) y un token. Enlace: https://[dominio]/#t=<token>; el token va en el fragmento, la invitación lo quita de la barra y lo envía a la API en el cuerpo de la petición (ADR 0013). Pases = adultos + niños autorizados; los infantes son informativos y no cuentan. Sin personas individuales en la v1: si hace falta identificar a un niño autorizado, va en la nota interna.
 El invitado confirma solo un total (1..pases si asiste, 0 si no). No escribe nombres. Campos opcionales: alergias (uno por invitación) y mensaje.
-Fecha límite configurable, inicialmente sábado 6 feb 2027 a las 23:59 hora del centro de México (−06:00); al vencer se bloquea. Los novios pueden desbloquear una invitación con vencimiento propio. Cambios ilimitados dentro del plazo, con historial.
-Sin token, token inválido o plazo vencido: la invitación se ve completa y solo se reemplaza la sección RSVP (textos pendientes de aprobación visual en I-5).
+Fecha límite configurable, inicialmente sábado 6 feb 2027 a las 23:59 hora del centro de México (−06:00): el plazo está cerrado cuando ahora ≥ 2027-02-07T00:00-06:00. Los novios pueden desbloquear una invitación solo después del plazo y nunca más allá del congelamiento, y pueden registrar respuestas hasta el congelamiento, con auditoría. Congelamiento del RSVP: domingo 7 mar 2027 00:00 (−06:00), configurable; desde entonces nadie cambia respuestas y el panel queda en solo lectura + exportación (ADR 0016). Cambios ilimitados dentro del plazo, con historial.
+Sin token, token inválido, plazo vencido o RSVP congelado: la invitación se ve completa y solo se reemplaza la sección RSVP; el mensaje de plazo vencido muestra siempre la fecha límite global (textos pendientes de aprobación visual en I-5).
 Importación repetible del Excel de la planner con código INV como llave; al reimportar se leen Grupo y Rol (la columna Rol manda sobre Comentario) y se ignoran ¿Asistirá?, Pases confirmados, Mensaje y Alergias. Exportación: Código INV + columnas de la planner + Mensaje del invitado, Grupo, Rol, Alergias.
 Recordatorios y envío de enlaces: manuales por WhatsApp desde el panel.
 Retención: alergias y teléfonos se borran el 5 abr 2027 (también en el historial); el resto de datos personales el 4 jun 2027. Los respaldos vencen en esas mismas fechas. La exportación final descargada contiene teléfonos y alergias: ese archivo se borra o se reemplaza por una versión sin esas columnas el 5 abr 2027.
