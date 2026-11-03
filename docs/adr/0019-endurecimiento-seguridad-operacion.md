@@ -28,6 +28,10 @@ En la invitación, lo que el hosting no pueda enviar como encabezado se declara 
   2. Un comando de mantenimiento descifra cada copia, la vuelve a cifrar con la llave actual y recalcula el HMAC si cambió la llave de hash.
   3. Cuando el comando termina sin errores, se retira la llave anterior.
   - Los enlaces enviados siguen funcionando durante todo el proceso.
+- **Precisiones de implementación (I-3, 3 nov 2026):**
+  - Durante una rotación de la llave de hash, la anterior va en `TOKEN_HASH_KEY_PREVIOUS` y la búsqueda la prueba después de la actual; así los enlaces no se cortan entre el reinicio y `rotate-keys`.
+  - La copia cifrada usa como datos asociados (AAD) la invitación y el id de la llave: una copia movida de fila o con otro id no se descifra. Mide exactamente 44 bytes (nonce 12 + cifrado 16 + etiqueta 16; migración 0002).
+  - En memoria, el token vive en `TokenEnClaro`, cuyo `repr`/`str` lo ocultan.
 
 ### Datos personales en logs y errores
 - **Regla general:** ningún log, mensaje de error ni respuesta de error contiene tokens, nombres, teléfonos, alergias, mensajes ni notas. Los logs usan una lista cerrada de campos permitidos (ruta sin parámetros, código de estado, duración, código INV cuando aplique, identificador de petición).

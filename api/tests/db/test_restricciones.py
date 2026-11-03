@@ -319,13 +319,13 @@ def test_dos_enlaces_activos(app_conn: Connection) -> None:  # M7
         "INSERT INTO enlace (invitacion_id, hmac_token, token_cifrado, id_llave) "
         "VALUES (:i, :h, :c, 'k1')"
     )
-    app_conn.execute(text(sql), {"i": inv, "h": b"\x01" * 32, "c": b"\x00" * 50})
-    falla_con(app_conn, UNIQUE, sql, {"i": inv, "h": b"\x02" * 32, "c": b"\x00" * 50})
+    app_conn.execute(text(sql), {"i": inv, "h": b"\x01" * 32, "c": b"\x00" * 44})
+    falla_con(app_conn, UNIQUE, sql, {"i": inv, "h": b"\x02" * 32, "c": b"\x00" * 44})
     # Revocado el primero, ya se puede crear otro.
     app_conn.execute(
         text("UPDATE enlace SET revocado_en = now() WHERE invitacion_id = :i"), {"i": inv}
     )
-    app_conn.execute(text(sql), {"i": inv, "h": b"\x02" * 32, "c": b"\x00" * 50})
+    app_conn.execute(text(sql), {"i": inv, "h": b"\x02" * 32, "c": b"\x00" * 44})
 
 
 def test_hmac_duplicado_y_longitud(app_conn: Connection) -> None:  # M7, D3
@@ -334,9 +334,21 @@ def test_hmac_duplicado_y_longitud(app_conn: Connection) -> None:  # M7, D3
         "INSERT INTO enlace (invitacion_id, hmac_token, token_cifrado, id_llave) "
         "VALUES (:i, :h, :c, 'k1')"
     )
-    app_conn.execute(text(sql), {"i": a, "h": b"\x07" * 32, "c": b"\x00" * 50})
-    falla_con(app_conn, UNIQUE, sql, {"i": b, "h": b"\x07" * 32, "c": b"\x00" * 50})
-    falla_con(app_conn, CHECK, sql, {"i": b, "h": b"\x08" * 16, "c": b"\x00" * 50})
+    app_conn.execute(text(sql), {"i": a, "h": b"\x07" * 32, "c": b"\x00" * 44})
+    falla_con(app_conn, UNIQUE, sql, {"i": b, "h": b"\x07" * 32, "c": b"\x00" * 44})
+    falla_con(app_conn, CHECK, sql, {"i": b, "h": b"\x08" * 16, "c": b"\x00" * 44})
+
+
+@pytest.mark.parametrize("largo", [0, 28, 43, 45, 50])
+def test_copia_cifrada_exactamente_44_bytes(app_conn: Connection, largo: int) -> None:  # 0002
+    inv = nueva_invitacion(app_conn)
+    falla_con(
+        app_conn,
+        CHECK,
+        "INSERT INTO enlace (invitacion_id, hmac_token, token_cifrado, id_llave) "
+        "VALUES (:i, :h, :c, 'k1')",
+        {"i": inv, "h": b"\x09" * 32, "c": b"\x00" * largo},
+    )
 
 
 # ------------------------------------------------------------------ configuración

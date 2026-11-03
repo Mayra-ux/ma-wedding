@@ -44,3 +44,25 @@ def falla_con(conn: Connection, sqlstate: str, sql: str, params: dict | None = N
         conn.execute(text(sql), params or {})
     assert info.value.orig.sqlstate == sqlstate, info.value.orig
     return str(info.value.orig)
+
+
+def llaves_de_prueba(
+    ids: tuple[str, ...] = ("k1",),
+    hash_key: bytes | None = None,
+    anterior: bytes | None = None,
+    cifrado: dict[str, bytes] | None = None,
+):
+    """Llaves aleatorias generadas en memoria (nunca se escriben en archivos)."""
+    import base64
+    import secrets
+
+    from app.tokens import parsear_llaves
+
+    def b64(raw: bytes) -> str:
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    cifrado = cifrado or {}
+    enc = ",".join(f"{k}:{b64(cifrado.get(k) or secrets.token_bytes(32))}" for k in ids)
+    return parsear_llaves(
+        b64(hash_key or secrets.token_bytes(32)), b64(anterior) if anterior else None, enc
+    )

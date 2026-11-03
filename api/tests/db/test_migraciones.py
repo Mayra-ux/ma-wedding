@@ -8,6 +8,8 @@ from app import migrar
 from app.models import Base
 from tests.db.conftest import APP, borrar_base, crear_base, urls
 
+HEAD = "0002"  # última migración
+
 TABLAS = {
     "configuracion_evento",
     "invitacion",
@@ -40,13 +42,13 @@ def test_migrate_desde_cero_y_repetible(admin_engine) -> None:
     try:
         assert _estado(u["migrator"]) == (set(), None)
         migrar.upgrade(u["migrator"], APP)
-        assert _estado(u["migrator"]) == (TABLAS, "0001")
+        assert _estado(u["migrator"]) == (TABLAS, HEAD)
         migrar.upgrade(u["migrator"], APP)  # segunda vez: no hace nada y no falla
-        assert _estado(u["migrator"]) == (TABLAS, "0001")
+        assert _estado(u["migrator"]) == (TABLAS, HEAD)
         migrar.downgrade_base(u["migrator"], APP)
         assert _estado(u["migrator"])[0] == set()
         migrar.upgrade(u["migrator"], APP)  # y se vuelve a crear igual
-        assert _estado(u["migrator"]) == (TABLAS, "0001")
+        assert _estado(u["migrator"]) == (TABLAS, HEAD)
     finally:
         borrar_base(admin_engine, name)
 
