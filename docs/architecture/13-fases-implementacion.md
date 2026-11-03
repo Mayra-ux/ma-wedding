@@ -11,6 +11,7 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - Existe `.env.example` solo con valores ficticios; `git status` no muestra `.env`.
 - El hook de escaneo de secretos bloquea un commit de prueba que contiene un secreto ficticio.
 - Los tests y el linter corren con un solo comando y pasan.
+- En `api/uv.lock` no aparecen `opentelemetry-sdk` ni ningún paquete `opentelemetry-exporter-*`; `opentelemetry-api` se admite como dependencia transitiva inerte de FastAPI (ADR 0019). Lo verifica un test.
 
 ## I-2 · Esquema, migraciones y datos ficticios
 - `migrate` crea el esquema desde cero con el usuario de migraciones y es repetible.

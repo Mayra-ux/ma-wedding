@@ -1,0 +1,7 @@
+# Escaneo de secretos antes de cada commit (ADR 0019). El repositorio es público.
+# Instalación (una vez por clon):  uv tool install pre-commit  &&  pre-commit install
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks

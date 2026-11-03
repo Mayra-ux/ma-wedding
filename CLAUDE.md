@@ -17,10 +17,10 @@ Datos aún pendientes (mostrar como placeholder entre corchetes, NUNCA inventar)
 2. Estado actual del proyecto
 Repo: Mayra-ux/ma-wedding. Ramas: main (publicada) y develop (trabajo; Mayra la sube al remoto).
 La ciudad (San Luis Potosí) se deduce de las coordenadas de Maps, pero no es un dato que los novios hayan pedido mostrar: no la agregues a la invitación.
-Despliegue PROVISIONAL en Vercel como sitio estático desde la raíz. Vercel no es el hosting definitivo.
+Despliegue PROVISIONAL en Vercel como sitio estático desde invitacion/ (Root Directory). Vercel no es el hosting definitivo.
 Mayra se encarga de repositorio, ramas, merges y despliegues. Tú no haces push, no despliegas y no creas servicios ni bases de datos reales.
 
-Archivos:
+Archivos (en invitacion/; api/ = backend FastAPI, panel/ = panel React + Vite, compose.yaml = entorno local; ADR 0020):
 
 index.html — página completa (HTML + CSS + JS vanilla, sin framework ni build).
 mono-espada.webp (monograma con espada: portada y cierre) · mono.webp (sin espada: nav, favicon).
