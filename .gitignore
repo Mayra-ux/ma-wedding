@@ -1,0 +1,40 @@
+# Secretos y configuración local (usar .env.example con valores ficticios)
+.env
+.env.*
+!.env.example
+*.xlsx
+*.csv
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Claude Code (configuración personal)
+.claude/settings.local.json
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+
+# Vercel CLI
+.vercel/
+
+# Logs y temporales
+*.log
+tmp/

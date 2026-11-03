@@ -16,12 +16,13 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Invitación Mayra &amp; Alejandro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&display=swap">
 <style>
-/* Layout: un "viaje" vertical por capítulos; cada capítulo es una escena enmarcada sobre papel marfil con capas botánicas en parallax; una sola atmósfera clara por decisión. */
+/* Layout: un "viaje" vertical por capítulos; cada capítulo es una escena enmarcada sobre papel marfil con ornamentos en parallax; una sola atmósfera clara por decisión. */
 :root{
   --marfil:#FBF7EE; --pergamino:#F3EAD7; --papel:#F7F0E1; --beige:#E9DCC0;
-  --esmeralda:#0D4F3D; --esmeralda-hondo:#0A3A2E; --bosque:#08231C; --musgo:#5C7D6B; --hoja:#9DB3A2;
+  --esmeralda:#0D4F3D; --esmeralda-hondo:#0A3A2E; --bosque:#08231C; --musgo:#5C7D6B;
   --oro:#D1AE66; --champagne:#E9D6A6; --oro-viejo:#B8964F; --oro-texto:#6B5222;
   --tinta:#1E2A24; --tinta-2:#34433B; --tenue:#5A645E;
   --sombra:0 1px 2px rgba(60,44,12,.06),0 12px 32px -12px rgba(60,44,12,.22),0 30px 60px -30px rgba(13,79,61,.18);
@@ -97,6 +98,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .gift .num{font-family:var(--f-display);font-size:clamp(34px,6vw,48px);letter-spacing:.12em;color:var(--esmeralda);font-variant-numeric:tabular-nums;user-select:all;text-shadow:0 0 18px rgba(209,174,102,.35)}
 .gift-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:18px}
 .copied{font-size:16px;font-style:italic;color:var(--esmeralda);min-height:1.4em}
+
+/* Nota: evento para adultos */
+.adults{margin-top:40px;width:100%;max-width:640px;display:flex;flex-direction:column;align-items:center;gap:12px;padding:30px clamp(18px,4vw,40px) 26px;border-top:1px solid rgba(184,150,79,.55);border-bottom:1px solid rgba(184,150,79,.55);background:rgba(233,214,166,.18);position:relative}
+.adults .emblem{position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center}
+.adults .emblem img{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
+.adults .emblem svg{position:relative;width:18px;height:18px;color:var(--oro);filter:drop-shadow(0 0 4px rgba(209,174,102,.9));animation:twinkle 3.4s ease-in-out infinite}
+.adults p{margin:0;font-style:italic;font-size:clamp(19px,2.3vw,22px);line-height:1.55;color:var(--tinta-2);max-width:52ch}
+.adults .small{font-family:var(--f-display);font-size:12px;letter-spacing:.3em;font-weight:600;color:var(--esmeralda);display:flex;align-items:center;gap:12px}
+.adults .small::before,.adults .small::after{content:"";width:28px;height:1px;background:var(--oro-viejo)}
 
 .eyebrow{font-family:var(--f-display);font-size:12px;letter-spacing:.42em;font-weight:600;color:var(--oro-texto)}
 .h2{font-family:var(--f-display);font-size:clamp(30px,5vw,46px);line-height:1.1;margin-top:12px;color:var(--esmeralda)}
@@ -263,6 +273,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   #motes{display:none}
 }
 </style>
+</head>
+<body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -440,6 +452,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div class="sw"><span class="dot tbd">?</span><strong>COLOR DEL NOVIO</strong><span class="t">Por definir</span></div>
         <div class="sw"><span class="dot" style="background:#474A51"></span><strong>GRIS OXFORD</strong><span class="t">Reservado para los caballeros del novio</span></div>
         <div class="sw no"><span class="dot red" role="img" aria-label="Círculo rojo tachado"></span><strong>ROJO</strong><span class="tag">COLOR NO PERMITIDO</span><span class="t">No uses prendas ni accesorios en rojo</span></div>
+      </div>
+      <div class="adults">
+        <span class="emblem" aria-hidden="true"><img src="orn-anillo.svg" alt=""><svg><use href="#star"/></svg></span>
+        <p>Con mucho cariño, hemos preparado esta celebración para disfrutarla entre adultos. Agradecemos de corazón su comprensión y esperamos compartir con ustedes este día tan especial.</p>
+        <span class="small">EVENTO EXCLUSIVO PARA ADULTOS</span>
       </div>
     </div>
   </div>
@@ -620,8 +637,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   var prog = document.getElementById('prog'), chap = document.getElementById('chap');
   var secs = Array.prototype.slice.call(document.querySelectorAll('[data-chap]'));
   var links = document.querySelectorAll('.nav ul a');
-  var leaves = Array.prototype.slice.call(document.querySelectorAll('.orn'));
-  leaves.forEach(function(l){ l._base = l.style.transform || ''; });
+  var ornaments = Array.prototype.slice.call(document.querySelectorAll('.orn'));
+  ornaments.forEach(function(l){ l._base = l.style.transform || ''; });
   var ticking = false;
   function onScroll(){
     var y = window.scrollY, H = document.documentElement.scrollHeight - innerHeight;
@@ -630,7 +647,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     secs.forEach(function(s){ if (s.getBoundingClientRect().top < innerHeight*.4) cur = s; });
     if (chap.textContent !== cur.dataset.chap) chap.textContent = y < 40 ? '06 · 03 · 2027' : cur.dataset.chap;
     links.forEach(function(a){ a.classList.toggle('on', a.dataset.sec === cur.id); });
-    if (!reduce) leaves.forEach(function(l){
+    if (!reduce) ornaments.forEach(function(l){
       var r = l.parentNode.getBoundingClientRect();
       var off = (r.top + r.height/2 - innerHeight/2) * parseFloat(l.dataset.depth) * -.35;
       l.style.transform = 'translateY('+off.toFixed(1)+'px) ' + l._base;
@@ -675,5 +692,5 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
 })();
 </script>
-
+</body>
 </html>
