@@ -30,16 +30,25 @@ y abrir http://localhost:8000.
 
 Requisitos: [uv](https://docs.astral.sh/uv/) y Docker Desktop.
 
-    copy .env.example .env        # PowerShell/cmd; en bash: cp .env.example .env
-    docker compose up --build     # API en http://127.0.0.1:8000/health + Postgres 16
+    copy .env.example .env                              # PowerShell/cmd; en bash: cp .env.example .env
+    docker compose up -d --build                        # API en http://127.0.0.1:8000/health + Postgres 16
+    docker compose run --rm migrate                     # esquema (usuario de migraciones)
+    docker compose run --rm api python -m app seed-dev  # datos FICTICIOS de desarrollo
 
 La base de datos no publica puertos; para entrar: `docker compose exec db psql -U ma_local ma_wedding_local`.
 Nunca uses datos reales en local: `.env` está ignorado por git y solo lleva valores ficticios.
 
-Tests, linter y formato con un solo comando:
+**Dos usuarios de base de datos (ADR 0019).** Al crear el volumen por primera vez, `db/init/01-roles.sh` crea
+`ma_migrator` (dueño del esquema; solo lo usa `migrate`) y `ma_app` (solo datos; lo usa la API). Si cambias
+esas variables en `.env`, borra el volumen (`docker compose down -v`) para que el script vuelva a correr.
+
+Tests, linter y formato con un solo comando (levanta solo la DB descartable `db-test`, publicada únicamente
+en `127.0.0.1:55432` y con los datos en memoria):
 
     cd api
     uv run python tools/check.py
+
+Para apagarla: `docker compose --profile test down`.
 
 ## Escaneo de secretos (una vez por clon)
 

@@ -1,25 +1,45 @@
 # Entorno LOCAL de desarrollo: API + Postgres 16 con datos ficticios.
 # Copia .env.example a .env antes de `docker compose up`. Nunca uses datos reales aquí.
+#
+#   docker compose up -d --build          API + DB de desarrollo
+#   docker compose run --rm migrate       migraciones (usuario de migraciones)
+#   docker compose run --rm api python -m app seed-dev   datos ficticios
+#   docker compose --profile test up -d --wait db-test   DB descartable para los tests
 name: ma-wedding
+
+x-api-base: &api-base
+  build:
+    context: ./api
+  env_file: .env
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
 
 services:
   api:
-    build:
-      context: ./api
-    env_file: .env
+    <<: *api-base
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Usuario de EJECUCIÓN: solo datos (ADR 0019).
+      DATABASE_URL: postgresql+psycopg://${DB_RUNTIME_ROLE}:${DB_APP_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
       - "127.0.0.1:8000:8000"   # solo accesible desde esta máquina
     depends_on:
       db:
         condition: service_healthy
     stop_grace_period: 30s
-    read_only: true
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
+
+  migrate:
+    <<: *api-base
+    profiles: ["tools"]
+    command: ["python", "-m", "app", "migrate"]
+    environment:
+      # Usuario de MIGRACIONES: dueño del esquema; solo este comando lo usa.
+      MIGRATION_DATABASE_URL: postgresql+psycopg://${DB_MIGRATOR_USER}:${DB_MIGRATOR_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16
@@ -27,15 +47,39 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      DB_MIGRATOR_USER: ${DB_MIGRATOR_USER}
+      DB_MIGRATOR_PASSWORD: ${DB_MIGRATOR_PASSWORD}
+      DB_RUNTIME_ROLE: ${DB_RUNTIME_ROLE}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD}
     # Sin `ports`: la DB no se publica fuera de la red de compose.
     # Acceso local: docker compose exec db psql -U "$POSTGRES_USER" "$POSTGRES_DB"
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro   # crea los dos usuarios (solo volumen vacío)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # DB DESCARTABLE para los tests: datos en memoria (tmpfs), publicada SOLO en 127.0.0.1.
+  # Las credenciales son ficticias y exclusivas de este contenedor local.
+  db-test:
+    image: postgres:16
+    profiles: ["test"]
+    environment:
+      POSTGRES_USER: ma_test_admin
+      POSTGRES_PASSWORD: ma_test_solo_local
+      POSTGRES_DB: postgres
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ma_test_admin -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
 volumes:
   db-data:
