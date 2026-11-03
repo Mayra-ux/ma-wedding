@@ -16,12 +16,13 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Invitación Mayra &amp; Alejandro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&display=swap">
 <style>
-/* Layout: un "viaje" vertical por capítulos; cada capítulo es una escena enmarcada sobre papel marfil con capas botánicas en parallax; una sola atmósfera clara por decisión. */
+/* Layout: un "viaje" vertical por capítulos; cada capítulo es una escena enmarcada sobre papel marfil con ornamentos en parallax; una sola atmósfera clara por decisión. */
 :root{
   --marfil:#FBF7EE; --pergamino:#F3EAD7; --papel:#F7F0E1; --beige:#E9DCC0;
-  --esmeralda:#0D4F3D; --esmeralda-hondo:#0A3A2E; --bosque:#08231C; --musgo:#5C7D6B; --hoja:#9DB3A2;
+  --esmeralda:#0D4F3D; --esmeralda-hondo:#0A3A2E; --bosque:#08231C; --musgo:#5C7D6B;
   --oro:#D1AE66; --champagne:#E9D6A6; --oro-viejo:#B8964F; --oro-texto:#6B5222;
   --tinta:#1E2A24; --tinta-2:#34433B; --tenue:#5A645E;
   --sombra:0 1px 2px rgba(60,44,12,.06),0 12px 32px -12px rgba(60,44,12,.22),0 30px 60px -30px rgba(13,79,61,.18);
@@ -263,6 +264,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   #motes{display:none}
 }
 </style>
+</head>
+<body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -620,8 +623,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   var prog = document.getElementById('prog'), chap = document.getElementById('chap');
   var secs = Array.prototype.slice.call(document.querySelectorAll('[data-chap]'));
   var links = document.querySelectorAll('.nav ul a');
-  var leaves = Array.prototype.slice.call(document.querySelectorAll('.orn'));
-  leaves.forEach(function(l){ l._base = l.style.transform || ''; });
+  var ornaments = Array.prototype.slice.call(document.querySelectorAll('.orn'));
+  ornaments.forEach(function(l){ l._base = l.style.transform || ''; });
   var ticking = false;
   function onScroll(){
     var y = window.scrollY, H = document.documentElement.scrollHeight - innerHeight;
@@ -630,7 +633,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     secs.forEach(function(s){ if (s.getBoundingClientRect().top < innerHeight*.4) cur = s; });
     if (chap.textContent !== cur.dataset.chap) chap.textContent = y < 40 ? '06 · 03 · 2027' : cur.dataset.chap;
     links.forEach(function(a){ a.classList.toggle('on', a.dataset.sec === cur.id); });
-    if (!reduce) leaves.forEach(function(l){
+    if (!reduce) ornaments.forEach(function(l){
       var r = l.parentNode.getBoundingClientRect();
       var off = (r.top + r.height/2 - innerHeight/2) * parseFloat(l.dataset.depth) * -.35;
       l.style.transform = 'translateY('+off.toFixed(1)+'px) ' + l._base;
@@ -675,5 +678,5 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   }
 })();
 </script>
-
+</body>
 </html>
