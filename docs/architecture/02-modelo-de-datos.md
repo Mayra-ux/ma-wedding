@@ -139,3 +139,39 @@ Ya no existen las entidades Lote ni Fila de importación (ADR 0018: importación
 | Correos de administradores | Sesión, Auditoría, Versión (actor) | 4 jun 2027 |
 | Invitaciones archivadas | Todas sus entidades | 4 jun 2027 (o antes, en las mismas fases) |
 | Configuración | — | No es dato personal; se elimina al apagar el sistema |
+
+## Implementación (fase I-2)
+
+El esquema vive en `api/migrations/versions/0001_esquema_inicial.py` (SQL escrito a mano). Las sugerencias marcadas **(sug.)** fueron aprobadas por Mayra el 3 nov 2026.
+
+| Regla | Cómo la garantiza la DB |
+|---|---|
+| M1, M3, M10, M12 | `CHECK`, `UNIQUE` y `varchar(n)` (cuenta caracteres, no bytes) |
+| M2 | `pases` es una **columna generada** (`adultos + ninos_autorizados`): nadie puede escribir otro valor |
+| M4 | Índice único parcial `version_una_vigente` (`WHERE vigente`) |
+| M5 | `CHECK version_asistencia_coherente` + disparador `version_confirmados_no_exceden_pases` (bloquea la invitación con `FOR SHARE`) |
+| M6 | Disparador `invitacion_pases_no_bajo_confirmados` |
+| M7 | `UNIQUE (hmac_token)` + índice único parcial `enlace_uno_activo` (`WHERE revocado_en IS NULL`) |
+| M9 | Disparador `version_inmutable` (solo permite vigente true → false y alergias → NULL) + permiso `UPDATE` por columna para el usuario de ejecución |
+| M11 (sug.) | `CHECK` de forma E.164 (`^\+[1-9][0-9]{7,14}$`); la normalización a +52 sigue en la API |
+| M14 (sug.) | `motivos_revision` solo acepta códigos cerrados: `pases_inconsistentes`, `lado_invalido`, `grupo_invalido`, `telefono_invalido`, `rol_invalido`; `requiere_revision = (hay motivos)` |
+| Alergias vacías (sug.) | Siempre `NULL`, nunca cadena vacía |
+| Fechas (sug.) | `cierre_plazo < congelamiento < fecha_borrado_1 < fecha_borrado_2`; configuración de un solo registro y **solo lectura** para el usuario de ejecución (cambiarla requiere una migración) |
+| A12 | La aplicación no borra invitaciones: guarda de SQLAlchemy (`app/guardas.py`) + test estático; solo la purga (I-10) puede, marcando la sesión |
+
+M8 y M13 siguen siendo de la API (I-3 e I-7).
+
+### Concurrencia
+
+Antes de **crear una versión de respuesta** o de **modificar pases**, la API bloquea la fila de la invitación con `SELECT … FOR UPDATE` (`app/respuestas.py`, `bloquear_invitacion`). Dos envíos simultáneos de la misma invitación se serializan: el segundo espera, ve la versión del primero y termina con **exactamente una vigente** y numeración consecutiva (test `tests/db/test_concurrencia.py`). Si la API olvidara el bloqueo, el índice único parcial rechaza la segunda vigente (mismo test).
+
+### Usuarios de la DB (ADR 0019)
+
+| | Migraciones (`ma_migrator`) | Ejecución (`ma_app`) |
+|---|---|---|
+| Esquema | Dueño de la base y de todas las tablas | Solo `USAGE`; sin `CREATE`, sin `TEMP` |
+| `configuracion_evento` | — | `SELECT` |
+| `invitacion` | — | `SELECT, INSERT, UPDATE, DELETE` (el `DELETE` es para la purga) |
+| `invitacion_rol`, `sesion_admin`, `evento_auditoria` | — | `SELECT, INSERT, DELETE` |
+| `version_respuesta` | — | `SELECT, INSERT, DELETE` + `UPDATE (vigente, alergias)` |
+| `enlace` | — | `SELECT, INSERT, DELETE` + `UPDATE (revocado_en, hmac_token, token_cifrado, id_llave)` |
