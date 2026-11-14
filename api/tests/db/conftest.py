@@ -12,6 +12,7 @@ import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 
 from app import migrar
 
@@ -119,3 +120,13 @@ def limpiar(migrator_engine: Engine) -> Iterator[None]:
     yield
     with migrator_engine.begin() as conn:
         conn.execute(text(f"TRUNCATE {DATA_TABLES} RESTART IDENTITY CASCADE"))
+
+
+@pytest.fixture
+def sesion(app_conn: Connection) -> Iterator[Session]:
+    """Sesión ORM del usuario de ejecución sobre `app_conn` (todo se revierte al final)."""
+    s = Session(bind=app_conn, join_transaction_mode="create_savepoint")
+    try:
+        yield s
+    finally:
+        s.close()

@@ -1,7 +1,9 @@
 # ADR 0001 — Registro de decisiones con ADRs
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0023
 - **Fecha:** 2026-11-02
+
+> Nota: el ADR 0023 permite una sección final "Notas de implementación" en ADRs aceptados, solo para precisiones técnicas que no cambian la decisión. El resto de este ADR sigue vigente.
 
 ## Contexto
 
@@ -47,3 +49,6 @@ Registrar cada decisión relevante como un ADR (Architecture Decision Record) en
 | 0018 | Importación y exportación: formatos y simplificación (reemplaza parcialmente al 0009) |
 | 0019 | Endurecimiento de seguridad y operación (complementa al 0004, 0005, 0008, 0010 y 0015) |
 | 0020 | Estructura del repositorio |
+| 0021 | Envío de enlaces hasta tener dominio definitivo (complementa al 0008 y al 0013) |
+| 0022 | Implementación de tokens y rotación de llaves (complementa al 0019 y al 0008) |
+| 0023 | Notas de implementación en ADRs aceptados (reemplaza parcialmente al 0001) |
