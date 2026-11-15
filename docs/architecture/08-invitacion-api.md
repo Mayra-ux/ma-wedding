@@ -1,6 +1,6 @@
 # 8. Comunicación invitación–API
 
-Basado en ADR 0002, 0011, 0013, 0016, 0019 y 0020. Describe el cambio **previsto** para la fase I-5. **Nada de esto se aplica ahora**, y cualquier pieza visual nueva requiere la aprobación de I-5.
+Basado en ADR 0002, 0011, 0013, 0016, 0019, 0020, 0021, 0024 y 0025. Las secciones 8.1–8.6 describen el diseño previsto; la sección 8.7 registra lo **implementado en I-5** (manda sobre lo anterior si difieren).
 
 ## 8.1 Principios
 
@@ -75,3 +75,14 @@ Antes de aplicar cualquiera de estos cambios, se listarán las líneas exactas p
 - La vista previa de WhatsApp (`og:*`) sigue genérica y sin nombres.
 - El resto de las secciones, animaciones, partículas, parallax y la cuenta regresiva.
 - La invitación funciona sin JavaScript del RSVP: si la API no responde, todo menos el formulario sigue visible.
+
+## 8.7 Implementación (fase I-5)
+
+- **Token:** `#t=` validado con `^[A-Za-z0-9_-]{22}$`; memoria + `sessionStorage` (`ma-rsvp-t`, con try/catch); se quita con `history.replaceState`. Un `#t=` con formato inválido se trata como "sin token". También se atiende `hashchange` (enlace abierto en una pestaña donde la invitación ya estaba cargada). Un `404` borra el token de `sessionStorage`.
+- **Peticiones:** `POST` a `api-base + /api/v1/public/invitation/{lookup|response}` con el token solo en el cuerpo, `credentials: 'omit'`, `cache: 'no-store'`, `referrerPolicy: 'no-referrer'` y 15 s de tiempo máximo. Todo dato se inserta con `textContent`.
+- **Estados y textos:** ADR 0024. "Abierta con respuesta" muestra el mensaje **sobre el formulario precargado** (no `#rsvp-done`). Ante `409` o `404` al guardar se vuelve a consultar; ante `422`, se vuelve a consultar y se muestra el error de guardado.
+- **Fechas:** `[fecha]` sale de `fecha_limite_mostrar` (global) o, si está abierta, de `abierta_hasta` (−1 ms en −06:00, igual que la API); formato «sábado 30 de enero de 2027» sin librerías.
+- **CSP (`<meta>`):** `default-src 'none'; script-src 'sha256-…'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src <origen de api-base>; base-uri 'none'; form-action 'none'`, más `<meta name="referrer" content="no-referrer">`.
+- **Un solo lugar para la URL de la API:** se edita `<meta name="api-base">` y se corre `cd api && uv run python tools/csp_invitacion.py --actualizar`, que recalcula el hash del script (con saltos LF, como el navegador) y copia el origen a `connect-src`. El test `tests/test_invitacion.py` falla si no coinciden.
+- **En local con Chromium:** la página en `localhost:8080` llamando a `localhost:8000` pide permiso de acceso a la red local (*Local Network Access*). En producción la página y la API son públicas y no aplica.
+- **Salida a producción:** ADR 0024 (solo `develop` hasta cumplir las condiciones).

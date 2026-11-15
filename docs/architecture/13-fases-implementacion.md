@@ -30,7 +30,7 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 
 ## I-4 · API pública
 - Tests con reloj simulado de cada estado: abierta (sin y con respuesta), cerrada (sin y con respuesta), desbloqueada, congelada (sin y con respuesta), inválida, revocada, archivada.
-- El cierre ocurre exactamente en `2027-02-07T00:00-06:00` (un segundo antes: abierta; en el instante: cerrada).
+- El cierre ocurre exactamente en `2027-01-31T00:00-06:00` (ADR 0025; un segundo antes: abierta; en el instante: cerrada).
 - `confirmados` fuera de rango → `422` sin escribir; `asiste=false` deja `confirmados=0` y las alergias vacías, y conserva el mensaje.
 - Cada respuesta válida crea una versión; tres envíos = tres versiones con una sola vigente.
 - Inválido, revocado y archivado devuelven cuerpos idénticos.
@@ -46,6 +46,8 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - Un nombre con `<script>` se muestra como texto.
 - La CSP declarada no rompe nada (consola sin violaciones).
 - Probado con un enlace ficticio abierto desde WhatsApp en iOS y Android.
+- **Salida a producción (ADR 0024):** I-5 se une solo a `develop`. Pasa a `main` únicamente cuando la API esté desplegada (I-10) y `api-base`/CSP apunten a ella, los apellidos del aviso de privacidad estén resueltos y la prueba de WhatsApp en iOS y Android haya pasado.
+- **Resultado (aprobado por Mayra):** estados aprobados visualmente en 390 y 1440 px. Comparación del resto de la página aceptada como **idéntico salvo ruido de renderizado ≤ 4/255** (la misma magnitud que aparece al comparar `develop` contra sí mismo). Ajustes de la aprobación: indicador «+»/«−» en el aviso de privacidad, error de guardado con el recuadro `.pending` y menor separación entre columnas apiladas de la sección. Queda pendiente solo la prueba de WhatsApp en iOS y Android (requiere la API desplegada).
 
 ## I-6 · Autenticación del panel
 - Un correo fuera de las listas recibe `403` sin sesión; la planner recibe `403` en cada endpoint de escritura (test parametrizado).
@@ -83,4 +85,4 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - Simulación de fechas: con el reloj en el 7 mar no se aceptan cambios; en el 5 abr no quedan teléfonos ni alergias (incluido el historial); en el 4 jun no quedan datos personales. Las ejecuciones son repetibles.
 - Un fallo forzado de `purge` o `backup` genera una alerta; cada ejecución deja un informe de conteos.
 - Los respaldos tienen vencimiento absoluto configurado.
-- Checklist de salida a producción firmado por Mayra: aviso de privacidad, textos de I-5, dominio, prueba de WhatsApp, Root Directory de Vercel.
+- Checklist de salida a producción firmado por Mayra: aviso de privacidad (con apellidos), textos de I-5, dominio, prueba de WhatsApp en iOS y Android, `api-base` y CSP de la invitación apuntando a la API desplegada, Root Directory de Vercel; solo entonces I-5 se une a `main` (ADR 0024).

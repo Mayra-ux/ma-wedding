@@ -37,7 +37,7 @@ Catálogo de reglas aceptadas. Garantía: **DB**, **API** o **Ambas**; la interf
 
 | # | Regla | Garantía | ADR |
 |---|---|---|---|
-| C1 | Fecha límite configurable. El plazo está cerrado cuando `ahora ≥ 2027-02-07T00:00-06:00`; se presenta como "sábado 6 de febrero de 2027" | API (configuración) | 0007, 0016 |
+| C1 | Fecha límite configurable. El plazo está cerrado cuando `ahora ≥ 2027-01-31T00:00-06:00`; se presenta como "Confirma a más tardar el sábado 30 de enero de 2027" (ADR 0025) | API (configuración) | 0007, 0016, 0025 |
 | C2 | Con el plazo cerrado, el invitado no crea ni cambia respuestas (`409 plazo_cerrado`), salvo desbloqueo vigente | API | 0007, 0016 |
 | C3 | El desbloqueo solo se permite después del plazo, y su vencimiento nunca supera el congelamiento | API | 0016 |
 | C4 | Los novios pueden registrar respuestas después del plazo y hasta el congelamiento, con auditoría y origen = admin | Ambas | 0016 |

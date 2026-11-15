@@ -52,13 +52,13 @@ def calcular_estado(
 
 
 def iso_mx(instante: datetime | None) -> str | None:
-    """ISO 8601 con zona −06:00, p. ej. 2027-02-07T00:00:00-06:00."""
+    """ISO 8601 con zona −06:00, p. ej. 2027-01-31T00:00:00-06:00."""
     return instante.astimezone(MX).isoformat() if instante is not None else None
 
 
 def fecha_limite_mostrar(cierre_plazo: datetime) -> date:
     """Último día local para responder: el día del instante anterior al cierre.
 
-    Cierre 2027-02-07T00:00-06:00 → 2027-02-06 («sábado 6 de febrero de 2027», regla C1).
+    Cierre 2027-01-31T00:00-06:00 → 2027-01-30 («sábado 30 de enero de 2027», ADR 0025).
     """
     return (cierre_plazo.astimezone(MX) - timedelta(microseconds=1)).date()

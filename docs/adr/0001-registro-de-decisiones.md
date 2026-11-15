@@ -52,3 +52,5 @@ Registrar cada decisión relevante como un ADR (Architecture Decision Record) en
 | 0021 | Envío de enlaces hasta tener dominio definitivo (complementa al 0008 y al 0013) |
 | 0022 | Implementación de tokens y rotación de llaves (complementa al 0019 y al 0008) |
 | 0023 | Notas de implementación en ADRs aceptados (reemplaza parcialmente al 0001) |
+| 0024 | Textos de la invitación, canal de contacto, aviso de privacidad y salida a producción de I-5 (reemplaza parcialmente al 0011) |
+| 0025 | Nueva fecha límite del RSVP: sábado 30 de enero de 2027 (reemplaza parcialmente al 0016) |

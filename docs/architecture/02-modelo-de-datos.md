@@ -7,7 +7,7 @@ Basado en ADR 0006, 0007, 0008/0013, 0009/0018, 0010, 0016, 0017 y 0019. Es un m
 ```mermaid
 erDiagram
   CONFIGURACION_EVENTO {
-    datetime cierre_plazo "2027-02-07T00:00-06:00, configurable"
+    datetime cierre_plazo "2027-01-31T00:00-06:00, configurable (ADR 0025)"
     datetime congelamiento "2027-03-07T00:00-06:00, configurable"
     date fecha_borrado_1 "5 abr 2027"
     date fecha_borrado_2 "4 jun 2027"

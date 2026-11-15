@@ -22,7 +22,7 @@ Sin cookies ni sesión; el token va en el cuerpo (ADR 0013). `Cache-Control: no-
 |---|---|
 | **Recurso / método** | `POST /api/v1/public/invitation/lookup` |
 | **Entrada** | `token` |
-| **Salida 200** | `nombre_mostrar`, `pases`, `fecha_limite` (la global: **instante exacto del cierre**, ISO 8601 con zona, p. ej. `2027-02-07T00:00:00-06:00`), `fecha_limite_mostrar` (último día local para responder, `AAAA-MM-DD`, p. ej. `2027-02-06`; la invitación lo presenta como «sábado 6 de febrero de 2027» sin calcularlo), `estado` (`abierta`, `cerrada` o `congelada`), `abierta_hasta` (cierre del plazo o del desbloqueo vigente; nulo si no está abierta), `respuesta` (nula u objeto con `asiste`, `confirmados`, `alergias`, `mensaje`, `actualizada`) |
+| **Salida 200** | `nombre_mostrar`, `pases`, `fecha_limite` (la global: **instante exacto del cierre**, ISO 8601 con zona, p. ej. `2027-01-31T00:00:00-06:00`), `fecha_limite_mostrar` (último día local para responder, `AAAA-MM-DD`, p. ej. `2027-01-30`; la invitación lo presenta como «sábado 30 de enero de 2027» sin calcularlo; ADR 0025), `estado` (`abierta`, `cerrada` o `congelada`), `abierta_hasta` (cierre del plazo o del desbloqueo vigente; nulo si no está abierta), `respuesta` (nula u objeto con `asiste`, `confirmados`, `alergias`, `mensaje`, `actualizada`) |
 | **Errores** | `400 solicitud_invalida` · `404 enlace_no_valido` (inexistente, revocado o archivada) · `413 cuerpo_demasiado_grande` · `429 demasiadas_solicitudes` |
 
 No devuelve el código INV, IDs, categorías, mesa, teléfonos ni nota.
