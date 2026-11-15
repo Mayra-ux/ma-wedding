@@ -15,7 +15,8 @@ def normalize_url(url: str) -> str:
 
 
 def make_engine(url: str) -> Engine:
-    return create_engine(normalize_url(url), pool_pre_ping=True)
+    # hide_parameters: los mensajes de error y logs de SQLAlchemy nunca incluyen valores (ADR 0019).
+    return create_engine(normalize_url(url), pool_pre_ping=True, hide_parameters=True)
 
 
 def make_sessionmaker(engine: Engine) -> sessionmaker[Session]:

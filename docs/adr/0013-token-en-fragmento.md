@@ -31,6 +31,8 @@ El ADR 0008 definió el enlace como `https://[dominio]/i/<token>` y exige que "l
 - Si el invitado guarda un marcador después de `replaceState`, el marcador no lleva el token, así que debe volver a abrir el enlace de WhatsApp. Al recargar en la misma pestaña, el token se recupera de `sessionStorage`.
 - El token sigue en el historial local del navegador y en el chat de WhatsApp; eso no cambia respecto al ADR 0008.
 
+> Envío de enlaces hasta tener dominio definitivo: ver ADR 0021.
+
 ## Pendientes
 
 - **Comprobar con enlaces de prueba** que los navegadores internos de WhatsApp (iOS y Android) y los navegadores móviles principales conservan el fragmento al abrir el enlace.

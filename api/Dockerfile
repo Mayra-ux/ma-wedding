@@ -34,5 +34,10 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"]
 STOPSIGNAL SIGTERM
+# IPs de proxies de confianza para X-Forwarded-For (uvicorn lee esta variable). Se ajusta al
+# elegir proveedor (I-10); la IP del cliente alimenta el rate limiting por IP (ADR 0019).
+ENV FORWARDED_ALLOW_IPS=127.0.0.1
 # Forma exec: uvicorn es PID 1 y recibe SIGTERM directamente; termina peticiones en curso.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-graceful-shutdown", "20", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]
+# Sin access log de uvicorn (registra IP y consulta) ni encabezado `server`: el log propio
+# usa una lista cerrada de campos (app/seguridad.py).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-graceful-shutdown", "20", "--proxy-headers", "--no-access-log", "--no-server-header"]

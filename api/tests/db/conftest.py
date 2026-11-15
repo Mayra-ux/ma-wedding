@@ -12,6 +12,7 @@ import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 
 from app import migrar
 
@@ -119,3 +120,57 @@ def limpiar(migrator_engine: Engine) -> Iterator[None]:
     yield
     with migrator_engine.begin() as conn:
         conn.execute(text(f"TRUNCATE {DATA_TABLES} RESTART IDENTITY CASCADE"))
+
+
+@pytest.fixture
+def sesion(app_conn: Connection) -> Iterator[Session]:
+    """Sesión ORM del usuario de ejecución sobre `app_conn` (todo se revierte al final)."""
+    s = Session(bind=app_conn, join_transaction_mode="create_savepoint")
+    try:
+        yield s
+    finally:
+        s.close()
+
+
+# --------------------------------------------------------------------------- API pública (I-4)
+class RelojFijo:
+    """Reloj simulado: los tests cambian `ahora`."""
+
+    def __init__(self) -> None:
+        from datetime import datetime
+
+        from app.estado import MX
+
+        self.ahora = datetime(2026, 11, 14, 12, 0, tzinfo=MX)
+
+    def __call__(self):  # noqa: ANN204
+        return self.ahora
+
+
+@pytest.fixture
+def reloj() -> RelojFijo:
+    return RelojFijo()
+
+
+@pytest.fixture
+def api(app_engine: Engine, reloj: RelojFijo, limpiar: None):  # noqa: ANN201
+    """Cliente de la API con la DB de pruebas (usuario de ejecución), llaves y reloj simulados."""
+    from fastapi.testclient import TestClient
+
+    from app.config import Settings
+    from app.db import make_sessionmaker
+    from app.main import create_app
+    from tests.db.util import llaves_de_prueba
+
+    llaves = llaves_de_prueba(("k1",))
+    app = create_app(
+        Settings(invitation_origin="https://ma-wedding-six.vercel.app"),
+        sesiones=make_sessionmaker(app_engine),
+        llaves=llaves,
+        reloj=reloj,
+    )
+    cliente = TestClient(app, raise_server_exceptions=False)
+    cliente.llaves = llaves
+    cliente.engine = app_engine
+    cliente.contexto = app.state.publico
+    return cliente

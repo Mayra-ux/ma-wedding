@@ -107,5 +107,6 @@ En la invitación, `style-src` necesita `'unsafe-inline'` porque el diseño cong
 ### Logs y errores
 
 - Lista cerrada de campos: ruta sin parámetros, método, código de estado, duración, identificador de petición y código INV cuando aplique.
+- Implementación (I-4): logger `app.acceso` propio (`app/seguridad.py`); se desactiva el access log de uvicorn (`--no-access-log`), que registra la IP y la cadena de consulta. Cada respuesta lleva `X-Request-ID`. Los errores imprevistos solo registran el tipo de excepción; el motor de SQLAlchemy usa `hide_parameters` para que ningún mensaje de error incluya valores.
 - Nunca: cuerpos, tokens, nombres, teléfonos, alergias, mensajes ni notas.
 - Errores sin valores de entrada; sin servicios externos de rastreo de errores.

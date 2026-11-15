@@ -38,9 +38,15 @@ Requisitos: [uv](https://docs.astral.sh/uv/) y Docker Desktop.
 La base de datos no publica puertos; para entrar: `docker compose exec db psql -U ma_local ma_wedding_local`.
 Nunca uses datos reales en local: `.env` está ignorado por git y solo lleva valores ficticios.
 
+**Llaves de tokens (I-3).** Genera las de tu `.env` local sin mostrarlas:
+`cd api && uv run python -m app generar-llaves --env-file ../.env`. Rotación: `docker compose run --rm api python -m app rotate-keys` (procedimiento en el doc 11).
+Ningún enlace real se envía a invitados hasta definir el dominio definitivo.
+
 **Dos usuarios de base de datos (ADR 0019).** Al crear el volumen por primera vez, `db/init/01-roles.sh` crea
 `ma_migrator` (dueño del esquema; solo lo usa `migrate`) y `ma_app` (solo datos; lo usa la API). Si cambias
 esas variables en `.env`, borra el volumen (`docker compose down -v`) para que el script vuelva a correr.
+
+**API pública (I-4):** `POST /api/v1/public/invitation/lookup` y `POST /api/v1/public/invitation/response`, con el token en el cuerpo. Contrato y códigos de error: doc 07.
 
 Tests, linter y formato con un solo comando (levanta solo la DB descartable `db-test`, publicada únicamente
 en `127.0.0.1:55432` y con los datos en memoria):
