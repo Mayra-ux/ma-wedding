@@ -177,13 +177,19 @@ def obtener_enlace(
     return EnlaceGenerado(TokenEnClaro(raw), origen)
 
 
-def buscar_por_token(session: Session, texto: object, llaves: Llaves) -> Invitacion:
-    """Invitación de un token válido y activo. Cualquier fallo → EnlaceNoValido (idéntico)."""
+def buscar_por_token(
+    session: Session, texto: object, llaves: Llaves, *, bloquear: bool = False
+) -> Invitacion:
+    """Invitación de un token válido y activo. Cualquier fallo → EnlaceNoValido (idéntico).
+
+    Con `bloquear=True` toma SELECT … FOR UPDATE sobre la invitación en la misma consulta
+    (antes de crear una versión de respuesta; doc 02, «Concurrencia»).
+    """
     raw = parsear_token(texto)
     if raw is None:
         raise EnlaceNoValido()
     for llave in llaves.hashes:  # actual y, durante una rotación, la anterior
-        inv = session.scalar(
+        consulta = (
             select(Invitacion)
             .join(Enlace, Enlace.invitacion_id == Invitacion.id)
             .where(
@@ -191,7 +197,11 @@ def buscar_por_token(session: Session, texto: object, llaves: Llaves) -> Invitac
                 Enlace.revocado_en.is_(None),
                 Invitacion.archivada_en.is_(None),
             )
+            .execution_options(populate_existing=True)
         )
+        if bloquear:
+            consulta = consulta.with_for_update(of=Invitacion)
+        inv = session.scalar(consulta)
         if inv is not None:
             return inv
     raise EnlaceNoValido()

@@ -5,7 +5,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 if TYPE_CHECKING:
@@ -63,6 +63,14 @@ class Settings(BaseSettings):
     token_hash_key: SecretStr | None = None
     token_hash_key_previous: SecretStr | None = None  # solo durante una rotación
     token_encryption_keys: SecretStr | None = None  # "id:llave,id:llave"; la primera es la actual
+
+    # Límites de la API pública (ADR 0019; valores iniciales configurables).
+    rate_limit_token_lookup_per_hour: int = Field(20, ge=1)
+    rate_limit_token_response_per_hour: int = Field(10, ge=1)
+    rate_limit_ip_per_hour: int = Field(300, ge=1)
+    max_body_public: int = Field(4096, ge=256)  # bytes
+    # HSTS solo con el dominio definitivo (ADR 0019 y 0021).
+    security_hsts: bool = False
 
     @field_validator("db_runtime_role")
     @classmethod

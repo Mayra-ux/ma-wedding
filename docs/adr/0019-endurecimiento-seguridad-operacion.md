@@ -76,3 +76,4 @@ Precisiones técnicas que no cambian la decisión (ADR 0023).
 - **Dependencia transitiva inerte (I-1, 2 nov 2026):** FastAPI exige `opentelemetry-api`. Se acepta porque es solo la interfaz y no envía datos por sí misma. Para mantenerla inerte, `api/uv.lock` no puede contener `opentelemetry-sdk` ni ningún paquete `opentelemetry-exporter-*`; un test de la API lo verifica.
 - ~~Herramienta de escaneo de secretos~~ — resuelto en I-1: gitleaks v8.30.1 mediante pre-commit.
 - Precisiones de implementación de tokens y rotación: ver ADR 0022.
+- **API pública (I-4, 14 nov 2026):** el rate limiting es un limitador propio en memoria (ventana deslizante de 1 h, sin dependencias nuevas); la clave por token es su HMAC, nunca el token. La IP del cliente la resuelve uvicorn con `X-Forwarded-For` solo desde los proxies de `FORWARDED_ALLOW_IPS`. HSTS se activa con `SECURITY_HSTS` al tener el dominio definitivo.

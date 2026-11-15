@@ -66,3 +66,33 @@ def llaves_de_prueba(
     return parsear_llaves(
         b64(hash_key or secrets.token_bytes(32)), b64(anterior) if anterior else None, enc
     )
+
+
+def invitacion_con_enlace(engine, llaves, **campos: object) -> dict:  # noqa: ANN001
+    """Crea (y confirma) una invitación ficticia con enlace activo. Devuelve sus datos."""
+    from sqlalchemy.orm import Session
+
+    from app.enlaces import generar_enlace
+
+    with Session(engine) as s, s.begin():
+        valores = {"nombre_mostrar": "Familia Ejemplo", "adultos": 3} | campos
+        inv_id = nueva_invitacion(s.connection(), **valores)
+        enlace = generar_enlace(s, inv_id, llaves, "https://ma-wedding-six.vercel.app")
+        codigo = s.connection().scalar(
+            text("SELECT codigo FROM invitacion WHERE id = :i"), {"i": inv_id}
+        )
+    return {"id": inv_id, "token": enlace.token.valor, "codigo": codigo, **valores}
+
+
+def versiones(engine, inv_id: int) -> list[tuple]:  # noqa: ANN001
+    with engine.connect() as conn:
+        return [
+            tuple(f)
+            for f in conn.execute(
+                text(
+                    "SELECT numero, vigente, asiste, confirmados, alergias, mensaje, origen "
+                    "FROM version_respuesta WHERE invitacion_id = :i ORDER BY numero"
+                ),
+                {"i": inv_id},
+            )
+        ]
