@@ -352,10 +352,10 @@ def test_copia_cifrada_exactamente_44_bytes(app_conn: Connection, largo: int) ->
 
 
 # ------------------------------------------------------------------ configuración
-def test_configuracion_inicial(app_conn: Connection) -> None:  # ADR 0010, 0016
+def test_configuracion_inicial(app_conn: Connection) -> None:  # ADR 0010, 0016, 0025
     fila = app_conn.execute(
         text(
-            "SELECT cierre_plazo = '2027-02-07T00:00:00-06:00', "
+            "SELECT cierre_plazo = '2027-01-31T00:00:00-06:00', "
             "congelamiento = '2027-03-07T00:00:00-06:00', "
             "fecha_borrado_1 = '2027-04-05', fecha_borrado_2 = '2027-06-04' "
             "FROM configuracion_evento"

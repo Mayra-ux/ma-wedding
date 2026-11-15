@@ -1,9 +1,9 @@
 # ADR 0011 — Estados de la sección RSVP en la invitación
 
-- **Estado:** Reemplazado parcialmente por ADR 0016
+- **Estado:** Reemplazado parcialmente por ADR 0016 y ADR 0024
 - **Fecha:** 2026-11-02
 
-> Nota: la tabla de estados (que agrega "congelada") y la fecha del mensaje (c) quedan reemplazadas por el ADR 0016. El resto de este ADR sigue vigente.
+> Nota: la tabla de estados (que agrega "congelada") y la fecha del mensaje (c) quedan reemplazadas por el ADR 0016; los textos de los mensajes y el canal de contacto, por el ADR 0024. El resto de este ADR sigue vigente.
 
 ## Contexto
 
@@ -40,3 +40,9 @@ La invitación pública se abre con o sin token, con tokens revocados y antes o 
 - **Canal de contacto** al que remite "escríbenos". Bloquea la aprobación de los textos (a), (b) y (c).
 - **Aprobación visual de la fase I-5:** campo de alergias, línea de aviso de privacidad, mensajes de estado y presentación de la respuesta registrada. Ningún cambio visual se aplica sin esa aprobación.
 - **Texto del aviso de privacidad** (ver ADR 0010).
+
+## Notas de implementación
+
+Precisiones técnicas que no cambian la decisión (ADR 0023).
+
+- **Pendientes resueltos (I-5, 15 nov 2026):** canal de contacto, textos de los estados, campo de alergias y línea del aviso de privacidad: ver ADR 0024. La aprobación visual de las capturas de I-5 queda registrada en la fase.

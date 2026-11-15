@@ -12,7 +12,7 @@ from tests.db.util import invitacion_con_enlace, versiones
 
 LOOKUP = "/api/v1/public/invitation/lookup"
 RESPONSE = "/api/v1/public/invitation/response"
-CIERRE = datetime(2027, 2, 7, 0, 0, tzinfo=MX)
+CIERRE = datetime(2027, 1, 31, 0, 0, tzinfo=MX)  # ADR 0025
 CONGELA = datetime(2027, 3, 7, 0, 0, tzinfo=MX)
 S = timedelta(seconds=1)
 
@@ -40,10 +40,10 @@ def test_abierta_sin_respuesta(api) -> None:  # noqa: ANN001
     assert r.json() == {
         "nombre_mostrar": "Familia Ejemplo",
         "pases": 3,
-        "fecha_limite": "2027-02-07T00:00:00-06:00",
-        "fecha_limite_mostrar": "2027-02-06",
+        "fecha_limite": "2027-01-31T00:00:00-06:00",
+        "fecha_limite_mostrar": "2027-01-30",
         "estado": "abierta",
-        "abierta_hasta": "2027-02-07T00:00:00-06:00",
+        "abierta_hasta": "2027-01-31T00:00:00-06:00",
         "respuesta": None,
     }
     assert r.headers["cache-control"] == "no-store"
@@ -74,7 +74,7 @@ def test_cerrada(api, reloj, con_respuesta: bool) -> None:  # noqa: ANN001
     r = api.post(LOOKUP, json={"token": inv["token"]}).json()
     assert r["estado"] == "cerrada" and r["abierta_hasta"] is None
     assert (r["respuesta"] is not None) is con_respuesta
-    assert r["fecha_limite"] == "2027-02-07T00:00:00-06:00"  # siempre la global (C7)
+    assert r["fecha_limite"] == "2027-01-31T00:00:00-06:00"  # siempre la global (C7)
     nuevo = _responder(api, inv["token"], True, 1)
     assert nuevo.status_code == 409
     assert nuevo.json()["error"]["code"] == "plazo_cerrado"
@@ -88,8 +88,8 @@ def test_desbloqueada_y_vuelve_a_cerrada(api, reloj) -> None:  # noqa: ANN001
     reloj.ahora = CIERRE + timedelta(hours=1)
     r = api.post(LOOKUP, json={"token": inv["token"]}).json()
     assert r["estado"] == "abierta"
-    assert r["abierta_hasta"] == "2027-02-09T00:00:00-06:00"
-    assert r["fecha_limite"] == "2027-02-07T00:00:00-06:00"  # el mensaje (c) usa la global
+    assert r["abierta_hasta"] == "2027-02-02T00:00:00-06:00"
+    assert r["fecha_limite"] == "2027-01-31T00:00:00-06:00"  # el mensaje (c) usa la global
     assert _responder(api, inv["token"]).status_code == 200
     reloj.ahora = hasta
     assert api.post(LOOKUP, json={"token": inv["token"]}).json()["estado"] == "cerrada"

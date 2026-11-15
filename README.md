@@ -46,6 +46,8 @@ Ningún enlace real se envía a invitados hasta definir el dominio definitivo.
 `ma_migrator` (dueño del esquema; solo lo usa `migrate`) y `ma_app` (solo datos; lo usa la API). Si cambias
 esas variables en `.env`, borra el volumen (`docker compose down -v`) para que el script vuelva a correr.
 
+**Invitación conectada (I-5):** la URL de la API se configura en `<meta name="api-base">` de `invitacion/index.html`; después corre `cd api && uv run python tools/csp_invitacion.py --actualizar` para recalcular la CSP. I-5 solo vive en `develop` hasta cumplir las condiciones del ADR 0024.
+
 **API pública (I-4):** `POST /api/v1/public/invitation/lookup` y `POST /api/v1/public/invitation/response`, con el token en el cuerpo. Contrato y códigos de error: doc 07.
 
 Tests, linter y formato con un solo comando (levanta solo la DB descartable `db-test`, publicada únicamente

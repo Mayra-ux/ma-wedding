@@ -45,3 +45,9 @@ El sistema guarda nombres, teléfonos, alergias (dato de salud, sensible según 
 
 - **Aviso de privacidad:** decidido como una línea breve junto al formulario, con enlace a un aviso corto. Falta el texto y el nombre del responsable de los datos. Bloquea la publicación del RSVP real.
 - La aprobación visual de esa línea forma parte de la fase I-5 (ADR 0011).
+
+## Notas de implementación
+
+Precisiones técnicas que no cambian la decisión (ADR 0023).
+
+- **Aviso de privacidad (I-5, 15 nov 2026):** texto aprobado y publicado como bloque desplegable en la invitación (ADR 0024). Responsables: Mayra y Alejandro; los apellidos siguen pendientes (`[APELLIDOS]` visible) y bloquean la salida a producción.

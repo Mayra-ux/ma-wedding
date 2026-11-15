@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-cPHMkJev+zvkDdxjC556B/KpOAmYkeZcpnjjcjNdgMg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src http://localhost:8000; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="api-base" content="http://localhost:8000">
 <meta name="description" content="Mayra &amp; Alejandro · 06.03.2027 · Toda leyenda comienza con una promesa.">
 <meta name="theme-color" content="#FBF7EE">
 <meta property="og:type" content="website">
@@ -245,6 +248,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .done svg{filter:drop-shadow(0 0 10px rgba(209,174,102,.7))}
 .done h3{font-family:var(--f-display);font-size:24px;line-height:1.3;color:var(--esmeralda)}
 .done p{margin:0;color:var(--tinta-2)}
+#confirmar .cols{row-gap:22px}
+#aviso-privacidad summary::-webkit-details-marker{display:none}
+#aviso-privacidad summary::after{content:"+";color:var(--oro-viejo);margin-left:.6em}
+#aviso-privacidad[open] summary::after{content:"−"}
 
 /* Cierre */
 .closing{background:radial-gradient(70% 60% at 50% 40%,rgba(233,214,166,.6),rgba(233,214,166,0) 70%),var(--pergamino) var(--papel-tex)}
@@ -497,11 +504,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div>
           <div class="eyebrow">CAPÍTULO VII</div>
           <h2 class="h2">¿Te unes a la aventura?</h2>
-          <p class="lead" style="margin:14px 0 0">Invitación para <strong style="font-weight:600">[Nombre del invitado o familia]</strong>. Hemos reservado <strong style="font-weight:600">2 lugares</strong> en tu honor.</p>
-          <p style="margin:8px 0 0;font-style:italic;color:var(--tenue)">Confirma antes del [fecha límite por definir]</p>
+          <p class="lead" id="rsvp-para" style="margin:14px 0 0" hidden>Invitación para <strong style="font-weight:600" id="rsvp-nombre"></strong>. Hemos reservado <strong style="font-weight:600" id="rsvp-lugares"></strong> en tu honor.</p>
+          <p id="rsvp-limite" style="margin:8px 0 0;font-style:italic;color:var(--tenue)" hidden>Confirma a más tardar el <span id="rsvp-fecha"></span></p>
         </div>
         <div>
-          <form class="rsvp" id="rsvp-form" novalidate>
+          <div class="done" id="rsvp-aviso" role="status" aria-live="polite" aria-busy="true">
+            <p id="rsvp-aviso-texto">Abriendo tu invitación…</p>
+            <button type="button" class="btn btn-line" id="rsvp-reintentar" hidden>REINTENTAR</button>
+          </div>
+          <form class="rsvp" id="rsvp-form" novalidate hidden>
+            <p class="lead" id="rsvp-registrada" style="margin:0" hidden></p>
             <fieldset>
               <legend class="label">¿ASISTIRÁS?</legend>
               <div class="choice">
@@ -513,27 +525,42 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
               <span class="label" id="seats-label">LUGARES QUE CONFIRMAS</span>
               <div class="stepper" role="group" aria-labelledby="seats-label">
                 <button type="button" id="dec" aria-label="Quitar un lugar">−</button>
-                <output id="seats" aria-live="polite">2 de 2</output>
+                <output id="seats" aria-live="polite"></output>
                 <button type="button" id="inc" aria-label="Agregar un lugar">+</button>
               </div>
               <p class="hint" style="margin:8px 0 0">No es posible confirmar más lugares de los asignados.</p>
             </div>
+            <div id="alergias-block">
+              <label class="label" for="rsvp-alergias">ALERGIAS O RESTRICCIONES ALIMENTICIAS (OPCIONAL)</label>
+              <textarea id="rsvp-alergias" rows="2" maxlength="200" placeholder="Ej. vegetariano, alergia a nueces…"></textarea>
+              <p class="hint" style="margin:8px 0 0">Solo la usaremos para preparar el banquete.</p>
+            </div>
             <div>
               <label class="label" for="rsvp-msg">MENSAJE PARA LOS NOVIOS (OPCIONAL)</label>
-              <textarea id="rsvp-msg" rows="3" placeholder="Escribe unas palabras…"></textarea>
+              <textarea id="rsvp-msg" rows="3" maxlength="500" placeholder="Escribe unas palabras…"></textarea>
             </div>
-            <button type="submit" class="btn btn-gold">ENVIAR CONFIRMACIÓN</button>
-            <p class="demo" style="margin:0">Vista previa del diseño · el envío real se conecta en la Fase 2</p>
+            <button type="submit" class="btn btn-gold" id="rsvp-enviar">ENVIAR CONFIRMACIÓN</button>
+            <p class="pending" id="rsvp-error" role="alert" style="margin:0" hidden></p>
+            <p class="demo" style="margin:0">Usaremos tus datos solo para organizar nuestra boda. <a href="#aviso-privacidad" id="rsvp-ver-aviso">Aviso de privacidad</a></p>
           </form>
           <div class="done" id="rsvp-done" hidden>
             <svg width="64" height="64" style="color:var(--oro-viejo)" aria-hidden="true"><use href="#seal"/></svg>
             <h3 id="done-title">¡Tu lugar en la leyenda está reservado!</h3>
             <p id="done-body"></p>
             <button type="button" class="btn btn-line" id="rsvp-edit">MODIFICAR RESPUESTA</button>
-            <p class="demo" style="margin:0">Vista previa del diseño · aún no se guarda</p>
           </div>
         </div>
       </div>
+      <details id="aviso-privacidad" style="margin-top:28px">
+        <summary class="label" style="cursor:pointer;margin:0">AVISO DE PRIVACIDAD</summary>
+        <p class="hint" style="margin:12px 0 0"><strong style="font-weight:600">Responsables:</strong> Mayra [APELLIDOS] y Alejandro [APELLIDOS], novios.</p>
+        <p class="hint" style="margin:12px 0 0"><strong style="font-weight:600">Qué datos usamos:</strong> el nombre con el que te invitamos, el número de lugares que confirmas, tu mensaje para nosotros (opcional) y, si nos los compartes, tus alergias o restricciones alimenticias (opcional; son datos de salud). También el teléfono con el que te enviamos la invitación.</p>
+        <p class="hint" style="margin:12px 0 0"><strong style="font-weight:600">Para qué:</strong> únicamente para organizar nuestra boda: saber quién asistirá, planear los lugares y el banquete, y comunicarnos contigo sobre el evento. No los vendemos ni los usamos con fines comerciales.</p>
+        <p class="hint" style="margin:12px 0 0"><strong style="font-weight:600">Con quién los compartimos:</strong> con nuestra organizadora de bodas y, en lo necesario, con el salón (número de asistentes y restricciones alimenticias para el banquete).</p>
+        <p class="hint" style="margin:12px 0 0"><strong style="font-weight:600">Cuánto tiempo los conservamos:</strong> las alergias y los teléfonos se eliminan el 5 de abril de 2027; el resto de los datos, el 4 de junio de 2027.</p>
+        <p class="hint" style="margin:12px 0 0"><strong style="font-weight:600">Tus derechos:</strong> puedes pedirnos ver, corregir o eliminar tus datos, u oponerte a su uso, escribiéndonos al chat de WhatsApp donde recibiste tu invitación.</p>
+        <p class="hint" style="margin:12px 0 0"><strong style="font-weight:600">Cambios:</strong> cualquier cambio a este aviso se publicará aquí mismo.</p>
+      </details>
     </div>
   </div>
 </section>
@@ -601,23 +628,162 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     cal.appendChild(c);
   }
 
-  // Confirmación (vista previa, no se envía)
-  var assigned = 2, seats = 2;
-  var out = document.getElementById('seats'), dec = document.getElementById('dec'), inc = document.getElementById('inc');
-  var block = document.getElementById('seats-block'), form = document.getElementById('rsvp-form'), done = document.getElementById('rsvp-done');
-  function render(){ out.textContent = seats+' de '+assigned; dec.disabled = seats<=1; inc.disabled = seats>=assigned; }
-  dec.addEventListener('click',function(){ if(seats>1){seats--;render();} });
-  inc.addEventListener('click',function(){ if(seats<assigned){seats++;render();} });
-  form.addEventListener('change',function(){ block.hidden = !document.getElementById('att-yes').checked; });
-  form.addEventListener('submit',function(e){
-    e.preventDefault();
-    var yes = document.getElementById('att-yes').checked;
-    document.getElementById('done-title').textContent = yes ? '¡Tu lugar en la leyenda está reservado!' : 'Gracias por avisarnos';
-    document.getElementById('done-body').textContent = yes ? ('Confirmaste '+seats+(seats===1?' lugar':' lugares')+'. Te esperamos el 6 de marzo de 2027.') : 'Te extrañaremos en este capítulo. Gracias por acompañarnos con tu cariño.';
-    form.hidden = true; done.hidden = false;
-  });
-  document.getElementById('rsvp-edit').addEventListener('click',function(){ done.hidden = true; form.hidden = false; });
-  render();
+  // Confirmación de asistencia (I-5): API pública con el token del fragmento #t= (ADR 0013).
+  // Todo dato de la API se inserta con textContent, nunca como HTML.
+  (function(){
+    var API = ((document.querySelector('meta[name="api-base"]') || {}).content || '').replace(/\/+$/, '');
+    var CLAVE = 'ma-rsvp-t';
+    function $(id){ return document.getElementById(id); }
+    var form = $('rsvp-form'), done = $('rsvp-done'), aviso = $('rsvp-aviso'), avisoTxt = $('rsvp-aviso-texto');
+    var reintentar = $('rsvp-reintentar'), para = $('rsvp-para'), limite = $('rsvp-limite'), fechaEl = $('rsvp-fecha');
+    var registrada = $('rsvp-registrada'), errorEl = $('rsvp-error'), enviar = $('rsvp-enviar');
+    var out = $('seats'), dec = $('dec'), inc = $('inc'), block = $('seats-block'), alergiasBlock = $('alergias-block');
+    var attYes = $('att-yes'), attNo = $('att-no'), msg = $('rsvp-msg'), alergias = $('rsvp-alergias');
+    var assigned = 1, seats = 1, token = null, datos = null, enviando = false;
+
+    var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    function formatear(y, m, d){ return DIAS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] + ' ' + d + ' de ' + MESES[m - 1] + ' de ' + y; }
+    // "2027-01-30" → "sábado 30 de enero de 2027"
+    function fechaDia(iso){ var p = String(iso).split('-'); return formatear(+p[0], +p[1], +p[2]); }
+    // Instante de cierre → último día local (−06:00) para responder, igual que la API.
+    function fechaCierre(iso){ var t = new Date(Date.parse(iso) - 1 - 6 * 36e5); return formatear(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate()); }
+    function lugares(n){ return n + (n === 1 ? ' lugar' : ' lugares'); }
+
+    var T = {
+      cargando: 'Abriendo tu invitación…',
+      sinToken: 'Para confirmar tu asistencia, abre el enlace personal que te enviamos por WhatsApp. Si no lo encuentras, escríbenos a ese mismo chat y con gusto te lo reenviamos.',
+      invalido: 'Este enlace ya no está activo. Escríbenos al chat de WhatsApp donde recibiste tu invitación y te enviaremos uno nuevo.',
+      errorCarga: 'No pudimos abrir tu invitación. Revisa tu conexión e inténtalo de nuevo.',
+      errorEnvio: 'No pudimos guardar tu respuesta. Revisa tu conexión e inténtalo de nuevo.',
+      limite: 'Hiciste varios intentos seguidos. Espera unos minutos e inténtalo de nuevo.',
+      congelada: 'Gracias por ser parte de nuestra leyenda. La confirmación de asistencia ya está cerrada.',
+      cerradaSin: function(f){ return 'El periodo de confirmación terminó el ' + f + '. Si necesitas confirmar o hacer algún cambio, escríbenos al chat de WhatsApp donde recibiste tu invitación y lo revisamos con gusto.'; },
+      cerradaCon: function(r, f){ return 'Tu respuesta quedó registrada: ' + (r.asiste ? lugares(r.confirmados) : 'no podrás acompañarnos') + '. El periodo para modificarla terminó el ' + f + '; si necesitas algún cambio, escríbenos al chat de WhatsApp.'; },
+      abiertaCon: function(r, f){ return r.asiste ? 'Ya registramos tu respuesta: ' + lugares(r.confirmados) + '. Puedes modificarla hasta el ' + f + '.' : 'Ya registramos que no podrás acompañarnos. Si cambian tus planes, puedes modificarlo hasta el ' + f + '.'; }
+    };
+
+    // ---- token (memoria + sessionStorage, fuera de la barra de direcciones)
+    function guardar(t){ try { if (t) sessionStorage.setItem(CLAVE, t); else sessionStorage.removeItem(CLAVE); } catch (e) {} }
+    function recuperar(){ try { return sessionStorage.getItem(CLAVE); } catch (e) { return null; } }
+    function leerToken(){
+      var h = location.hash;
+      if (h.indexOf('#t=') === 0) {
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+        var m = /^#t=([A-Za-z0-9_-]{22})$/.exec(h);
+        if (m) { guardar(m[1]); return m[1]; }
+        return null; // formato inválido: se trata como "sin token" (doc 08)
+      }
+      var s = recuperar();
+      return (s && /^[A-Za-z0-9_-]{22}$/.test(s)) ? s : null;
+    }
+
+    // ---- API (token solo en el cuerpo, sin credenciales ni referer)
+    function llamar(ruta, cuerpo){
+      var ctrl = window.AbortController ? new AbortController() : null;
+      var reloj = ctrl ? setTimeout(function(){ ctrl.abort(); }, 15000) : null;
+      function fin(r){ if (reloj) clearTimeout(reloj); return r; }
+      return fetch(API + '/api/v1/public/invitation/' + ruta, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(cuerpo),
+        credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: ctrl ? ctrl.signal : undefined
+      }).then(function(r){
+        return r.json().catch(function(){ return null; }).then(function(j){ return fin({status: r.status, json: j}); });
+      }, function(){ return fin({status: 0, json: null}); });
+    }
+
+    // ---- presentación
+    function mostrarAviso(texto, conReintentar){
+      form.hidden = true; done.hidden = true; limite.hidden = true; aviso.hidden = false;
+      aviso.removeAttribute('aria-busy');
+      avisoTxt.textContent = texto;
+      reintentar.hidden = !conReintentar;
+    }
+    function render(){ out.textContent = seats + ' de ' + assigned; dec.disabled = seats <= 1; inc.disabled = seats >= assigned; }
+    function alternar(){ var si = attYes.checked; block.hidden = !si; alergiasBlock.hidden = !si; }
+    function precargar(r){
+      assigned = Math.max(1, datos.pases);
+      if (r) {
+        attYes.checked = !!r.asiste; attNo.checked = !r.asiste;
+        seats = r.asiste ? Math.min(Math.max(1, r.confirmados), assigned) : assigned;
+        alergias.value = r.alergias || ''; msg.value = r.mensaje || '';
+      } else {
+        attYes.checked = true; attNo.checked = false; seats = assigned; alergias.value = ''; msg.value = '';
+      }
+      alternar(); render();
+    }
+    function pintar(){
+      $('rsvp-nombre').textContent = datos.nombre_mostrar;
+      $('rsvp-lugares').textContent = lugares(datos.pases);
+      para.hidden = false;
+      var r = datos.respuesta;
+      if (datos.estado === 'abierta') {
+        var f = datos.abierta_hasta ? fechaCierre(datos.abierta_hasta) : fechaDia(datos.fecha_limite_mostrar);
+        fechaEl.textContent = f; limite.hidden = false;
+        registrada.textContent = r ? T.abiertaCon(r, f) : ''; registrada.hidden = !r;
+        precargar(r);
+        errorEl.hidden = true; aviso.hidden = true; aviso.removeAttribute('aria-busy'); done.hidden = true; form.hidden = false;
+      } else if (datos.estado === 'cerrada') {
+        var g = fechaDia(datos.fecha_limite_mostrar); // siempre la fecha límite global (C7)
+        mostrarAviso(r ? T.cerradaCon(r, g) : T.cerradaSin(g), false);
+      } else {
+        mostrarAviso(T.congelada, false);
+      }
+    }
+    function consultar(){
+      form.hidden = true; done.hidden = true; aviso.hidden = false; reintentar.hidden = true;
+      aviso.setAttribute('aria-busy', 'true'); avisoTxt.textContent = T.cargando;
+      return llamar('lookup', {token: token}).then(function(res){
+        if (res.status === 200 && res.json) { datos = res.json; pintar(); }
+        else if (res.status === 404) { token = null; guardar(null); para.hidden = true; mostrarAviso(T.invalido, false); }
+        else if (res.status === 429) { mostrarAviso(T.limite, true); }
+        else { mostrarAviso(T.errorCarga, true); }
+        return res.status;
+      });
+    }
+    function mostrarExito(r){
+      $('done-title').textContent = r.asiste ? '¡Tu lugar en la leyenda está reservado!' : 'Gracias por avisarnos';
+      $('done-body').textContent = r.asiste ? ('Confirmaste ' + lugares(r.confirmados) + '. Te esperamos el 6 de marzo de 2027.') : 'Te extrañaremos en este capítulo. Gracias por acompañarnos con tu cariño.';
+      form.hidden = true; aviso.hidden = true; done.hidden = false;
+    }
+    function errorEnvio(texto){ errorEl.textContent = texto; errorEl.hidden = false; }
+
+    // ---- eventos
+    dec.addEventListener('click', function(){ if (seats > 1) { seats--; render(); } });
+    inc.addEventListener('click', function(){ if (seats < assigned) { seats++; render(); } });
+    form.addEventListener('change', alternar);
+    reintentar.addEventListener('click', function(){ if (token) consultar(); });
+    $('rsvp-ver-aviso').addEventListener('click', function(){ $('aviso-privacidad').open = true; });
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      if (enviando || !token || !datos) return;
+      enviando = true; errorEl.hidden = true;
+      var etiqueta = enviar.textContent;
+      enviar.disabled = true; enviar.setAttribute('aria-busy', 'true'); enviar.textContent = 'ENVIANDO…';
+      var si = attYes.checked;
+      llamar('response', {
+        token: token, asiste: si, confirmados: si ? seats : 0,
+        alergias: si ? (alergias.value.trim() || null) : null, mensaje: msg.value.trim() || null
+      }).then(function(res){
+        if (res.status === 200 && res.json) { datos.respuesta = res.json.respuesta; mostrarExito(res.json.respuesta); }
+        else if (res.status === 404 || res.status === 409) { return consultar(); }
+        else if (res.status === 422) { return consultar().then(function(){ if (!form.hidden) errorEnvio(T.errorEnvio); }); }
+        else if (res.status === 429) { errorEnvio(T.limite); }
+        else { errorEnvio(T.errorEnvio); }
+      }).then(function(){
+        enviando = false; enviar.disabled = false; enviar.removeAttribute('aria-busy'); enviar.textContent = etiqueta;
+      });
+    });
+    $('rsvp-edit').addEventListener('click', function(){ pintar(); });
+
+    // Enlace abierto en una pestaña donde la invitación ya estaba cargada (solo cambia el fragmento).
+    window.addEventListener('hashchange', function(){
+      if (location.hash.indexOf('#t=') !== 0) return;
+      token = leerToken();
+      if (token) consultar(); else { para.hidden = true; mostrarAviso(T.sinToken, false); }
+    });
+    token = leerToken();
+    if (token) consultar(); else mostrarAviso(T.sinToken, false);
+  })();
 
   // Mesa de regalos: copiar número de evento
   var gMsg = document.getElementById('gift-msg');

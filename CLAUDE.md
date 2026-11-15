@@ -8,7 +8,7 @@ Fecha: sábado 6 de marzo de 2027
 Ceremonia religiosa: Templo San Francisco de Asís · 1:00 p. m. Maps: https://www.google.com/maps/place/Templo+San+Francisco+de+As%C3%ADs/@22.1492414,-100.9799864,17z/data=!3m2!4b1!5s0x842aa200f92953e3:0x5da576b56a6ddfff!4m6!3m5!1s0x842aa201021fcc9f:0x7d98890494befe79!8m2!3d22.1492365!4d-100.9774115!16s%2Fg%2F1tdmvyt0
 Recepción: La Viña Jardín de Eventos · 4:00 p. m. Maps: https://www.google.com/maps/place/La+Vi%C3%B1a+Jard%C3%ADn+de+Eventos/@22.199253,-100.8952941,17z/data=!4m17!1m10!3m9!1s0x842aa12bfba8499d:0x7b935db99bfadd22!2sLa+Vi%C3%B1a+Jard%C3%ADn+de+Eventos!8m2!3d22.199253!4d-100.8952941!10e5!14m1!1BCgIgARICEAE!16s%2Fg%2F11hc_0g172!3m5!1s0x842aa12bfba8499d:0x7b935db99bfadd22!8m2!3d22.199253!4d-100.8952941!16s%2Fg%2F11hc_0g172
 Mesa de regalos: Liverpool · número de evento 60001357
-Fecha límite de confirmación (RSVP): sábado 6 de febrero de 2027, 23:59, hora del centro de México (−06:00); configurable.
+Fecha límite de confirmación (RSVP): sábado 30 de enero de 2027, incluido completo, hora del centro de México (−06:00); configurable (ADR 0025).
 Evento para adultos. Los novios pueden autorizar niños por invitación como excepción (ver §4). La nota de "evento exclusivo para adultos" de la invitación no cambia.
 Colores reservados: verde esmeralda → damas · blanco/ivory/marfil/beige → novia · gris Oxford → caballeros del novio · color del novio → por definir · rojo → no permitido.
 
@@ -48,7 +48,7 @@ El camino — tarjetas en arco: IV Ceremonia (esmeralda) y V Recepción (marfil)
 La travesía · Itinerario — línea de tiempo; solo Ceremonia 1:00 p. m. y Recepción 4:00 p. m. son datos reales; el resto son placeholders punteados.
 VI · Código de vestimenta — "[ FORMALIDAD POR CONFIRMAR ]", tarjetas de colores (esmeralda, novia, novio por definir, gris Oxford, rojo tachado con "COLOR NO PERMITIDO") y nota cálida de evento para adultos (aprobada el 31 oct 2026 e insertada en index.html; emblema orn-anillo.svg con estrella, "EVENTO EXCLUSIVO PARA ADULTOS").
 Un presente · Mesa de regalos — Liverpool, número 60001357, botón copiar, botón a mesaderegalos.liverpool.com.mx.
-VII · ¿Te unes a la aventura? — formulario RSVP (hoy SIMULADO: no guarda nada).
+VII · ¿Te unes a la aventura? — formulario RSVP conectado a la API en develop (I-5, textos del ADR 0024, aviso de privacidad desplegable); en main sigue la versión simulada hasta cumplir las condiciones de salida del ADR 0024.
 VIII · Cierre — monograma con espada, "Gracias por ser parte de nuestra leyenda".
 
 Recursos de ambiente: textura de papel (SVG noise), escenas con doble marco y esquinas ornamentales, ornamentos SVG con parallax, partículas doradas en canvas, aparición suave por scroll (contenido siempre visible en reposo). Todo respeta prefers-reduced-motion.
@@ -58,7 +58,7 @@ Reglas visuales permanentes:
 Sin rojo en todo el diseño, salvo el círculo rojo tachado del código de vestimenta.
 No usar marcas ni arte oficial de Nintendo: Trifuerza, logotipos de Zelda, escudo hyliano, símbolos de los Sabios, alfabeto zonai, íconos del juego. La temática se evoca con ornamentos propios, la espada del monograma y el lenguaje de leyenda.
 Ornamentos (decidido por los novios, 2 nov 2026; ADR 0012 y ADR 0014): se conservan los tres orn-*.svg actuales del paquete TotK, por decisión consciente de Mayra. Usos permitidos, exactamente los del diseño aprobado: ornamentos de fondo con parallax en Portada (meandro, espirales), Aventura (anillo), El gran día (espirales), El camino (meandro, anillo), Itinerario (espirales), Vestimenta (meandro), Mesa de regalos (anillo), Confirmar (espirales) y Cierre (anillo, espirales), más el emblema de orn-anillo.svg en la nota de adultos de Vestimenta. No agregues más piezas de ese paquete ni otros elementos oficiales del juego, y no uses estas tres en lugares nuevos.
-Los lugares "2" del RSVP son un valor de demostración, no un dato: se sustituirán por el dato de la API en la fase I-5.
+En develop, el nombre, los lugares y la fecha del RSVP vienen de la API como texto (I-5); la URL de la API se configura en <meta name="api-base"> y la CSP se recalcula con api/tools/csp_invitacion.py.
 No usar hojas ni ornamentos vegetales.
 No usar fotos de stock ni generadas por IA. Las fotos de la sesión de pareja llegarán después; no prepares galería hasta que se pida.
 Mobile first. Sin scroll horizontal. Accesible (labels, foco visible, contraste).
@@ -77,7 +77,7 @@ Dominio: propio.
 Galería futura: solo fotos de la sesión de pareja.
 Posible a futuro (no ahora): Vite sin framework para la invitación, solo si hace falta optimizar las fotos o versionar los nombres de archivo. La página tendría que verse idéntica.
 
-Sin decidir: proveedor del PaaS y del Postgres administrado, compra del dominio, canal de contacto para los mensajes del RSVP.
+Sin decidir: proveedor del PaaS y del Postgres administrado, compra del dominio.
 
 Principios obligatorios:
 
@@ -99,13 +99,14 @@ Decisiones funcionales (detalle en docs/adr/):
 
 Invitación = familia o grupo, con nombre a mostrar, código interno no secreto (INV-###) y un token. Enlace: https://[dominio]/#t=<token>; el token va en el fragmento, la invitación lo quita de la barra y lo envía a la API en el cuerpo de la petición (ADR 0013). Pases = adultos + niños autorizados; los infantes son informativos y no cuentan. Sin personas individuales en la v1: si hace falta identificar a un niño autorizado, va en la nota interna.
 El invitado confirma solo un total (1..pases si asiste, 0 si no). No escribe nombres. Campos opcionales: alergias (uno por invitación) y mensaje.
-Fecha límite configurable, inicialmente sábado 6 feb 2027 a las 23:59 hora del centro de México (−06:00): el plazo está cerrado cuando ahora ≥ 2027-02-07T00:00-06:00. Los novios pueden desbloquear una invitación solo después del plazo y nunca más allá del congelamiento, y pueden registrar respuestas hasta el congelamiento, con auditoría. Congelamiento del RSVP: domingo 7 mar 2027 00:00 (−06:00), configurable; desde entonces nadie cambia respuestas y el panel queda en solo lectura + exportación (ADR 0016). Cambios ilimitados dentro del plazo, con historial.
+Fecha límite configurable, inicialmente sábado 30 ene 2027, incluido completo, hora del centro de México (−06:00): el plazo está cerrado cuando ahora ≥ 2027-01-31T00:00-06:00 (ADR 0025). Los novios pueden desbloquear una invitación solo después del plazo y nunca más allá del congelamiento, y pueden registrar respuestas hasta el congelamiento, con auditoría. Congelamiento del RSVP: domingo 7 mar 2027 00:00 (−06:00), configurable; desde entonces nadie cambia respuestas y el panel queda en solo lectura + exportación (ADR 0016). Cambios ilimitados dentro del plazo, con historial.
 Sin token, token inválido, plazo vencido o RSVP congelado: la invitación se ve completa y solo se reemplaza la sección RSVP; el mensaje de plazo vencido muestra siempre la fecha límite global (textos pendientes de aprobación visual en I-5).
 Importación repetible del Excel de la planner con código INV como llave; al reimportar se leen Grupo y Rol (la columna Rol manda sobre Comentario) y se ignoran ¿Asistirá?, Pases confirmados, Mensaje y Alergias. Exportación: Código INV + columnas de la planner + Mensaje del invitado, Grupo, Rol, Alergias.
 Recordatorios y envío de enlaces: manuales por WhatsApp desde el panel.
 Retención: alergias y teléfonos se borran el 5 abr 2027 (también en el historial); el resto de datos personales el 4 jun 2027. Los respaldos vencen en esas mismas fechas. La exportación final descargada contiene teléfonos y alergias: ese archivo se borra o se reemplaza por una versión sin esas columnas el 5 abr 2027.
 
-Pendientes (no asumir): canal de contacto, texto del aviso de privacidad y responsable de los datos, aprobación visual de I-5 (alergias, aviso, estados), proveedor de hosting, dominio; hasta definirlo, no se envía ningún enlace real a invitados (ADR 0021).
+Canal de contacto: el mismo chat de WhatsApp donde cada invitado recibió su invitación; no se publica ningún número (ADR 0024).
+Pendientes (no asumir): apellidos de los responsables en el aviso de privacidad, prueba de WhatsApp en iOS y Android, proveedor de hosting, dominio; hasta definirlo, no se envía ningún enlace real a invitados (ADR 0021). I-5 no se une a main hasta cumplir las condiciones del ADR 0024.
 
 5. Forma de trabajo
 Trabajamos por fases. No avances a la siguiente fase sin autorización explícita de Mayra.

@@ -6,7 +6,7 @@ import pytest
 
 from app.estado import MX, Estado, calcular_estado, fecha_limite_mostrar, iso_mx
 
-CIERRE = datetime(2027, 2, 7, 0, 0, tzinfo=MX)  # 2027-02-07T00:00-06:00 (ADR 0016)
+CIERRE = datetime(2027, 1, 31, 0, 0, tzinfo=MX)  # 2027-01-31T00:00-06:00 (ADR 0025)
 CONGELA = datetime(2027, 3, 7, 0, 0, tzinfo=MX)
 S = timedelta(seconds=1)
 
@@ -23,8 +23,8 @@ def test_cierre_exacto() -> None:
 
 
 def test_mismo_instante_en_utc() -> None:
-    assert estado(datetime(2027, 2, 7, 5, 59, 59, tzinfo=UTC)).estado is Estado.ABIERTA
-    assert estado(datetime(2027, 2, 7, 6, 0, 0, tzinfo=UTC)).estado is Estado.CERRADA
+    assert estado(datetime(2027, 1, 31, 5, 59, 59, tzinfo=UTC)).estado is Estado.ABIERTA
+    assert estado(datetime(2027, 1, 31, 6, 0, 0, tzinfo=UTC)).estado is Estado.CERRADA
 
 
 def test_desbloqueo_vigente_y_vencido() -> None:
@@ -53,9 +53,9 @@ def test_reloj_sin_zona_se_rechaza() -> None:
 
 
 def test_fechas_para_mostrar() -> None:
-    assert iso_mx(CIERRE) == "2027-02-07T00:00:00-06:00"
-    assert iso_mx(datetime(2027, 2, 7, 6, tzinfo=UTC)) == "2027-02-07T00:00:00-06:00"
+    assert iso_mx(CIERRE) == "2027-01-31T00:00:00-06:00"
+    assert iso_mx(datetime(2027, 1, 31, 6, tzinfo=UTC)) == "2027-01-31T00:00:00-06:00"
     assert iso_mx(None) is None
-    assert fecha_limite_mostrar(CIERRE) == date(2027, 2, 6)  # «sábado 6 de febrero de 2027»
-    assert fecha_limite_mostrar(CIERRE).isoformat() == "2027-02-06"
-    assert fecha_limite_mostrar(datetime(2027, 2, 7, 0, 0, 1, tzinfo=MX)) == date(2027, 2, 7)
+    assert fecha_limite_mostrar(CIERRE) == date(2027, 1, 30)  # «sábado 30 de enero de 2027»
+    assert fecha_limite_mostrar(CIERRE).isoformat() == "2027-01-30"
+    assert fecha_limite_mostrar(datetime(2027, 1, 31, 0, 0, 1, tzinfo=MX)) == date(2027, 1, 31)
