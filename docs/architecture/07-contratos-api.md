@@ -22,7 +22,7 @@ Sin cookies ni sesión; el token va en el cuerpo (ADR 0013). `Cache-Control: no-
 |---|---|
 | **Recurso / método** | `POST /api/v1/public/invitation/lookup` |
 | **Entrada** | `token` |
-| **Salida 200** | `nombre_mostrar`, `pases`, `fecha_limite` (la global, ISO 8601 con zona), `estado` (`abierta`, `cerrada` o `congelada`), `abierta_hasta` (cierre del plazo o del desbloqueo vigente), `respuesta` (nula u objeto con `asiste`, `confirmados`, `alergias`, `mensaje`, `actualizada`) |
+| **Salida 200** | `nombre_mostrar`, `pases`, `fecha_limite` (la global: **instante exacto del cierre**, ISO 8601 con zona, p. ej. `2027-02-07T00:00:00-06:00`), `fecha_limite_mostrar` (último día local para responder, `AAAA-MM-DD`, p. ej. `2027-02-06`; la invitación lo presenta como «sábado 6 de febrero de 2027» sin calcularlo), `estado` (`abierta`, `cerrada` o `congelada`), `abierta_hasta` (cierre del plazo o del desbloqueo vigente; nulo si no está abierta), `respuesta` (nula u objeto con `asiste`, `confirmados`, `alergias`, `mensaje`, `actualizada`) |
 | **Errores** | `400 solicitud_invalida` · `404 enlace_no_valido` (inexistente, revocado o archivada) · `413 cuerpo_demasiado_grande` · `429 demasiadas_solicitudes` |
 
 No devuelve el código INV, IDs, categorías, mesa, teléfonos ni nota.
@@ -37,6 +37,31 @@ No devuelve el código INV, IDs, categorías, mesa, teléfonos ni nota.
 | **Errores** | `400` · `404 enlace_no_valido` · `409 plazo_cerrado` (cerrada sin desbloqueo, o congelada) · `422 confirmados_fuera_de_rango` · `422 validacion` · `413` · `429` |
 
 Efecto: en una transacción crea una versión nueva y la marca como vigente (ADR 0007).
+
+### Implementación (fase I-4)
+
+- **Entrada estricta:** tipos estrictos (`asiste` booleano, `confirmados` entero) y sin campos de más; un campo no previsto (p. ej. `pases`) → `400 solicitud_invalida`. El token solo viaja en el cuerpo; no existen variantes en la URL.
+- **Orden de las comprobaciones** (lo que no depende del token se responde antes de buscarlo, para no revelar si existe): límite por IP (`429`) → cuerpo > 4 KB (`413`) → JSON, tipos o campos (`400`) → longitudes y caracteres (`422 validacion`, con `fields`) → límite por token (`429`) → token no válido por cualquier motivo, incluido el formato (`404 enlace_no_valido`, cuerpo idéntico) → plazo (`409 plazo_cerrado`) → rango (`422 confirmados_fuera_de_rango`).
+- **Textos libres:** `
+` → `
+`; espacios al inicio y al final se quitan; vacío → `null`. Se rechazan caracteres de control (categoría Unicode Cc) salvo salto de línea y tabulador (`fields`: `caracteres_no_permitidos`); longitud en caracteres (`demasiado_largo`).
+- **`asiste=false`:** exige `confirmados=0` (si no, `422 confirmados_fuera_de_rango`); las alergias se vacían sin error y el mensaje se conserva (ADR 0017).
+- **Concurrencia:** la búsqueda del token toma `SELECT … FOR UPDATE` sobre la invitación; plazo, desbloqueo y pases se leen bajo el bloqueo.
+- **CORS:** solo en `/api/v1/public`; `Access-Control-Allow-Origin` = `INVITATION_ORIGIN`, método `POST`, encabezado `Content-Type`, sin credenciales, `max-age` 600.
+- **Encabezados en toda respuesta de la API:** `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'`, `X-Request-ID`; `Strict-Transport-Security` solo con `SECURITY_HSTS=true` (dominio definitivo). Sin encabezado `server`.
+
+### Mensajes (provisionales hasta aprobar los textos de I-5)
+
+| `code` | `message` |
+|---|---|
+| `solicitud_invalida` | La solicitud no es válida. |
+| `enlace_no_valido` | Este enlace no es válido. |
+| `plazo_cerrado` | El plazo para confirmar ya cerró. |
+| `confirmados_fuera_de_rango` | El número de asistentes no es válido. |
+| `validacion` | Revisa los datos enviados. |
+| `cuerpo_demasiado_grande` | La solicitud es demasiado grande. |
+| `demasiadas_solicitudes` | Demasiados intentos. Intenta de nuevo más tarde. (con `Retry-After`) |
+| `error_interno` | Ocurrió un error. Intenta de nuevo. (500, sin traza) |
 
 ---
 

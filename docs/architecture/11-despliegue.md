@@ -46,8 +46,10 @@ Solo los **nombres** y su propósito. Los valores reales nunca van al repositori
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Cliente OAuth de Google | — / ✔ |
 | `ADMIN_EMAILS_NOVIOS` / `ADMIN_EMAILS_PLANNER` | Listas de correos por rol | ✔ (no exponer) |
 | `INVITATION_ORIGIN` | Origen de la invitación: CORS de la API pública y base del enlace `/#t=`. Solo esquema y host; `https` salvo `localhost`/`127.0.0.1` | — |
-| `RATE_LIMIT_TOKEN_*` / `RATE_LIMIT_IP_*` | Umbrales (ADR 0019) | — |
-| `MAX_BODY_PUBLIC` / `MAX_BODY_ADMIN` / `MAX_IMPORT_FILE` | Tamaños máximos | — |
+| `RATE_LIMIT_TOKEN_LOOKUP_PER_HOUR` / `RATE_LIMIT_TOKEN_RESPONSE_PER_HOUR` / `RATE_LIMIT_IP_PER_HOUR` | Umbrales (ADR 0019): 20 / 10 / 300 por hora | — |
+| `FORWARDED_ALLOW_IPS` | Proxies de confianza para `X-Forwarded-For` (la lee uvicorn; la imagen usa `127.0.0.1`). Se ajusta al elegir proveedor: de ella depende la IP del rate limiting | — |
+| `SECURITY_HSTS` | `true` solo con el dominio definitivo (ADR 0019 y 0021); por defecto `false` | — |
+| `MAX_BODY_PUBLIC` / `MAX_BODY_ADMIN` / `MAX_IMPORT_FILE` | Tamaños máximos (público: 4096 bytes) | — |
 | `BACKUP_*` | Destino y llave de cifrado de respaldos (si los hace la imagen) | ✔ |
 | `ALERT_*` | Canal de alertas de `purge` y `backup` (pendiente) | ✔ |
 | `LOG_LEVEL` | Nivel de registro | — |
