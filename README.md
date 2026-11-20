@@ -50,6 +50,8 @@ esas variables en `.env`, borra el volumen (`docker compose down -v`) para que e
 
 **Panel y login con Google (I-6):** la API sirve una página provisional en http://localhost:8000/admin/ (Chrome o Edge). Necesita en `.env`: `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (cliente OAuth "Aplicación web" con la URI `http://localhost:8000/api/v1/auth/google/callback`), `ADMIN_EMAILS_NOVIOS`, `ADMIN_EMAILS_PLANNER` y `SESSION_SECRET` (lo escribe `generar-llaves --env-file ../.env` sin mostrarlo). Tras cambiar el `.env`: `docker compose up -d --force-recreate api`. Detalle en el doc 11.
 
+**Importación y exportación (I-8, ADR 0028):** los novios importan el Excel (.xlsx) o un CSV de la planner desde el panel, eligiendo la hoja y el lado por defecto; la vista previa no guarda nada y aplicar es todo o nada. **Regla de trabajo:** cada hoja de la planner se importa una sola vez (su archivo no trae Código INV, así que reimportarla duplicaría invitaciones); después, los cambios se hacen en el panel o reimportando el archivo exportado, que sí trae Código INV. La exportación (novios y planner) tiene 19 columnas, teléfonos E.164 y la opción `solo_confirmados`, útil para el script del mensaje del día de la boda. **Los archivos exportados contienen teléfonos y alergias:** guárdalos fuera del repo (`*.xlsx` y `*.csv` están ignorados) y bórralos o recórtalos el 5 abr 2027 (ADR 0010). Las pruebas usan solo archivos ficticios generados en `api/tests/planilla_ficticia.py`.
+
 **API pública (I-4):** `POST /api/v1/public/invitation/lookup` y `POST /api/v1/public/invitation/response`, con el token en el cuerpo. Contrato y códigos de error: doc 07.
 
 Tests, linter y formato con un solo comando (levanta solo la DB descartable `db-test`, publicada únicamente

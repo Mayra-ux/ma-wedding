@@ -9,6 +9,7 @@ Ninguna respuesta incluye el token ni la URL del enlace, salvo `GET …/link` (s
 """
 
 from fastapi import FastAPI, Request, Response
+from starlette.concurrency import run_in_threadpool
 
 from app import invitaciones as svc
 from app.enlaces import (
@@ -23,11 +24,12 @@ from app.esquemas_panel import (
     EntradaDesbloqueo,
     EntradaEdicion,
     EntradaEnlaceEnviado,
+    EntradaExportacion,
     EntradaInvitacion,
     EntradaRecordatorio,
     EntradaRespuestaAdmin,
 )
-from app.estado import iso_mx
+from app.estado import MX, iso_mx
 
 SOLO_NOVIOS = {"solo_novios": True}
 PERMITE_PLANNER = {"permite_planner": True}
@@ -107,6 +109,59 @@ def registrar_rutas(app: FastAPI) -> None:  # noqa: C901 (lista plana de rutas)
                 s, codigo, entrada.destino, ctx(request).reloj(), actor(request)
             )
         return {"tipo": tipo, "destino": entrada.destino}
+
+    # ------------------------------------------------------------------ exportación (N y P)
+    @app.post("/exports", openapi_extra=PERMITE_PLANNER)
+    def exportar(request: Request, entrada: EntradaExportacion) -> Response:
+        from app import exportacion as exp
+
+        with sesion(request) as s, s.begin():
+            todas = svc.lista(s, incluir_archivadas=False)
+            filas = exp.filas_exportacion(todas, entrada.solo_confirmados)
+            svc.auditar(
+                s,
+                actor(request),
+                "exportacion",
+                detalle={
+                    "formato": entrada.formato,
+                    "filas": len(filas),
+                    "solo_confirmados": entrada.solo_confirmados,
+                },
+            )
+        contenido = exp.a_xlsx(filas) if entrada.formato == "xlsx" else exp.a_csv(filas)
+        hoy = ctx(request).reloj().astimezone(MX).date()
+        nombre = exp.nombre_archivo(entrada.formato, hoy, entrada.solo_confirmados)
+        return Response(
+            contenido,
+            media_type=exp.TIPOS[entrada.formato],
+            headers={"content-disposition": f'attachment; filename="{nombre}"'},
+        )
+
+    # ------------------------------------------------------------------ importación (solo N)
+    def _importar(request: Request, datos: bytes, hoja, lado, aplicar: bool) -> dict:  # noqa: ANN001
+        from app import planilla
+
+        tipo = request.headers.get("content-type")
+        with sesion(request) as s, s.begin():
+            if aplicar:
+                a = planilla.aplicar(s, datos, tipo, hoja, lado, actor(request))
+            else:
+                a = planilla.analizar(s, datos, tipo, hoja, lado)
+            return a.respuesta()
+
+    @app.post("/imports/preview")
+    async def importar_vista_previa(
+        request: Request, hoja: str | None = None, lado_por_defecto: str | None = None
+    ) -> dict:
+        datos = await request.body()
+        return await run_in_threadpool(_importar, request, datos, hoja, lado_por_defecto, False)
+
+    @app.post("/imports/apply")
+    async def importar_aplicar(
+        request: Request, hoja: str | None = None, lado_por_defecto: str | None = None
+    ) -> dict:
+        datos = await request.body()
+        return await run_in_threadpool(_importar, request, datos, hoja, lado_por_defecto, True)
 
     # ------------------------------------------------------------------ invitaciones (solo N)
     @app.post("/invitations", status_code=201)

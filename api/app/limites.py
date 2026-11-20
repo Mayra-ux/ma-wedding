@@ -92,14 +92,24 @@ class _CuerpoDemasiadoGrande(Exception):
 class LimiteDeCuerpo:
     """Middleware ASGI: rechaza cuerpos mayores a `max_bytes` (con o sin Content-Length)."""
 
-    def __init__(self, app: ASGIApp, max_bytes: int) -> None:
+    def __init__(
+        self, app: ASGIApp, max_bytes: int, por_ruta: dict[str, int] | None = None
+    ) -> None:
         self.app = app
         self.max_bytes = max_bytes
+        self.por_ruta = por_ruta or {}  # sufijo de ruta → máximo propio (importación: 2 MB)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
+        ruta = scope.get("path", "")
+        maximo = next(
+            (m for sufijo, m in self.por_ruta.items() if ruta.endswith(sufijo)), self.max_bytes
+        )
+        await self._limitar(scope, receive, send, maximo)
+
+    async def _limitar(self, scope: Scope, receive: Receive, send: Send, maximo: int) -> None:
         for nombre, valor in scope.get("headers", []):
             if nombre == b"content-length":
                 try:
@@ -107,7 +117,7 @@ class LimiteDeCuerpo:
                 except ValueError:
                     await respuesta_error_asgi(send, 400, "solicitud_invalida")
                     return
-                if declarado > self.max_bytes:
+                if declarado > maximo:
                     await respuesta_error_asgi(send, 413, "cuerpo_demasiado_grande")
                     return
 
@@ -120,7 +130,7 @@ class LimiteDeCuerpo:
             mensaje = await receive()
             if mensaje["type"] == "http.request":
                 recibidos += len(mensaje.get("body", b""))
-                if recibidos > self.max_bytes:
+                if recibidos > maximo:
                     excedido = True
                     raise _CuerpoDemasiadoGrande
             return mensaje

@@ -210,9 +210,11 @@ def _sub_app(ctx: ContextoPanel, **kwargs: object) -> FastAPI:
     return app
 
 
-def _endurecer(app: FastAPI, ctx: ContextoPanel, max_cuerpo: int) -> None:
+def _endurecer(
+    app: FastAPI, ctx: ContextoPanel, max_cuerpo: int, por_ruta: dict[str, int] | None = None
+) -> None:
     # De fuera hacia dentro: errores → límite por IP → tamaño de cuerpo → rutas. Sin CORS.
-    app.add_middleware(LimiteDeCuerpo, max_bytes=max_cuerpo)
+    app.add_middleware(LimiteDeCuerpo, max_bytes=max_cuerpo, por_ruta=por_ruta)
     app.add_middleware(LimitePorIP, limitador=ctx.limite_ip)
     app.add_middleware(AtrapaErrores)
 
@@ -321,13 +323,14 @@ def _iguales(a: str, b: str) -> bool:
     return hmac.compare_digest(a.encode("utf-8", "replace"), b.encode("utf-8", "replace"))
 
 
-def crear_app_admin(ctx: ContextoPanel, max_cuerpo: int) -> FastAPI:
-    """API del panel (I-7). Todas sus rutas heredan la guardia."""
+def crear_app_admin(ctx: ContextoPanel, max_cuerpo: int, max_importacion: int) -> FastAPI:
+    """API del panel (I-7, I-8). Todas sus rutas heredan la guardia."""
     from app.panel_rutas import registrar_rutas
 
     app = _sub_app(ctx, dependencies=[Depends(guardia_admin)])
     registrar_rutas(app)
-    _endurecer(app, ctx, max_cuerpo)
+    importacion = {"/imports/preview": max_importacion, "/imports/apply": max_importacion}
+    _endurecer(app, ctx, max_cuerpo, importacion)
     return app
 
 

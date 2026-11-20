@@ -76,7 +76,7 @@ Catálogo de reglas aceptadas. Garantía: **DB**, **API** o **Ambas**; la interf
 | E8 | "# Pases" del Excel solo valida y se guarda como original. Si no coincide con adultos + niños → "requiere revisión"; la marca se quita sola al corregir | API | 0009, 0018 |
 | E9 | Rol: la columna Rol manda. Sin ella, Comentario es rol solo si coincide exactamente con el catálogo; si no, es nota | API | 0018 |
 | E10 | Al reimportar se leen Grupo y Rol; se ignoran ¿Asistirá?, Pases confirmados, Mensaje y Alergias | API | 0009 |
-| E11 | Los duplicados por nombre solo generan aviso | API | 0018 |
+| E11 | Los duplicados por nombre solo generan aviso (`posible_duplicado`, con advertencia en la vista previa). Cada hoja de la planner se importa una vez; después, los cambios se hacen en el panel o reimportando el archivo exportado | API | 0018, 0028 |
 | E12 | Exportación: Código INV + 14 columnas + Mensaje, Grupo, Rol, Alergias, igual para novios y planner. "# Pases" calculado. Sin archivadas. Con protección contra fórmulas | API | 0009, 0018, 0026 |
 | E13 | Recordatorios: invitaciones con enlace enviado y sin respuesta; WhatsApp al teléfono principal o al contacto alterno | Panel + API | 0003, 0017 |
 | E14 | Se auditan importaciones, exportaciones, desbloqueos, enlaces, archivados, respuestas del admin, ediciones, recordatorios y cada consulta de la lista | Ambas | 0005, 0016, 0026 |
@@ -98,3 +98,15 @@ Catálogo de reglas aceptadas. Garantía: **DB**, **API** o **Ambas**; la interf
 | F10 | Si `purge` o `backup` fallan, se emite una alerta; cada ejecución deja un informe de conteos sin datos personales | Tarea + proceso | 0019 |
 | F11 | Dos usuarios de DB (migraciones / ejecución), TLS obligatorio, Postgres privado | Infraestructura | 0004, 0019 |
 | F12 | Después del borrado final se apagan la API y la DB | Proceso | 0010 |
+
+## G. Archivo real de la planner (ADR 0028)
+
+| # | Regla | Garantía | ADR |
+|---|---|---|---|
+| G1 | Se reconocen las hojas con «Nombre Invitado» en la fila de encabezados; las demás se ignoran y, si hay varias, se elige la hoja al importar | API | 0028 |
+| G2 | Encabezados exactos del archivo real; los espacios repetidos se cuentan como uno | API | 0028 |
+| G3 | «Invitado de» vacío toma el lado por defecto elegido al importar | API | 0028 |
+| G4 | «Adultos» vacío es error de fila; «# Pases» solo cuenta en las altas | API | 0028 |
+| G5 | Aplicar un archivo con cualquier error de fila no escribe nada | API | 0028 |
+| G6 | Archivo de 2 MB como máximo; .xlsx revisado contra bombas ZIP, macros, rutas peligrosas y XML con entidades | API | 0019, 0028 |
+| G7 | Exportación con teléfonos E.164, autofiltro y `solo_confirmados`, para el script del día de la boda | API | 0028 |

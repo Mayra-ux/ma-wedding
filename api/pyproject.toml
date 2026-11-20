@@ -12,6 +12,9 @@ dependencies = [
     "psycopg[binary]==3.3.7",
     "cryptography==50.0.2",
     "pyjwt[crypto]==2.15.1",
+    "openpyxl==3.1.5",
+    "et-xmlfile==2.0.0",
+    "defusedxml==0.7.1",
 ]
 
 [dependency-groups]

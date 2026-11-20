@@ -97,19 +97,20 @@ sequenceDiagram
   participant A as API
   participant D as PostgreSQL
 
-  N->>P: Sube el archivo xlsx o csv
-  P->>A: POST imports preview con el archivo
-  A->>A: Lee columnas, con o sin Código INV al inicio
+  N->>P: Sube el archivo xlsx o csv, elige la hoja y el lado por defecto
+  P->>A: POST imports preview con el archivo en el cuerpo
+  A->>A: Revisa el archivo (tamaño, bomba ZIP, macros, XML con entidades)
+  A->>A: Busca la fila de encabezados y ubica las columnas por su nombre, con o sin Código INV
   loop Cada fila
     A->>A: Normaliza teléfonos, mapea Invitado de a Novia, Novio o Ambos
     A->>A: Rol desde la columna Rol separada por punto y coma, o desde Comentario si coincide exacto
     A->>A: Ignora Asistirá, Pases confirmados, Mensaje y Alergias
     A->>A: Clasifica en alta, actualización o error de código desconocido
     A->>A: Revisión si Pases del Excel distinto de adultos + niños, lado o teléfono inválido
-    A->>A: Avisos de nombre duplicado o teléfono faltante
+    A->>A: Avisos de nombre duplicado, nombre con varios o teléfono faltante; error si falta Adultos
   end
   A-->>P: Resultado por fila, sin escribir nada en la DB
-  N->>P: Revisa y confirma
+  N->>P: Revisa y confirma (si hay errores de fila, aplicar no escribe nada)
   P->>A: POST imports apply con el mismo archivo
   A->>D: Transacción: aplica altas y actualizaciones, guarda Pases original, sin borrar nada
   A->>D: Evento de auditoría con los conteos

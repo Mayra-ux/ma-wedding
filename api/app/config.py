@@ -100,6 +100,7 @@ class Settings(BaseSettings):
     sesion_inactividad_horas: float = Field(8, gt=0)
     sesion_maxima_dias: float = Field(7, gt=0)
     max_body_admin: int = Field(65536, ge=1024)  # bytes
+    max_import_file: int = Field(2 * 1024 * 1024, ge=1024)  # bytes (I-8, ADR 0019)
 
     @field_validator("db_runtime_role")
     @classmethod

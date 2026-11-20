@@ -65,3 +65,8 @@ class EntradaEnlaceEnviado(_Entrada):
 
 class EntradaRecordatorio(_Entrada):
     destino: Literal["principal", "alterno"]
+
+
+class EntradaExportacion(_Entrada):
+    formato: Literal["xlsx", "csv"] = "xlsx"
+    solo_confirmados: StrictBool = False
