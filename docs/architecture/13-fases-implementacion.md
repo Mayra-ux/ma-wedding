@@ -55,6 +55,7 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - La cookie es `__Host-`, `Secure`, `HttpOnly`, `SameSite=Strict`; el logout invalida la sesión en el servidor.
 - Quitar un correo de la lista y reiniciar corta una sesión abierta.
 - Los encabezados de seguridad de la API y del panel están presentes (test).
+- **Resultado (cerrada, 20 nov 2026; aprobado por Mayra):** todos los criterios se cumplen con pruebas automáticas y Google simulado (406 pruebas en total), incluida una prueba de mutación que confirma que fallan si se quitan el chequeo de rol, el de CSRF o la revisión de las listas. Prueba real con Google en local (`http://localhost:8000/admin/`, Chrome): una cuenta de la lista de novios entra con el rol de novios, cerrar sesión regresa al botón de inicio y una cuenta fuera de las listas ve «Acceso denegado». Por ahora no hay correo de planner (`ADMIN_EMAILS_PLANNER` vacía); se agrega cuando Mayra lo tenga. Detalles de implementación: ADR 0005 y 0019 (notas de implementación).
 
 ## I-7 · API del panel
 - CRUD con las validaciones M1–M14; archivar revoca el enlace y saca la invitación de la lista por defecto y de la exportación.

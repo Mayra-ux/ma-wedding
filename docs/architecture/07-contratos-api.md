@@ -77,10 +77,12 @@ Rol: **N** = novios, **P** = planner.
 
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
-| `GET /api/v1/auth/google/login` | — | — | Redirección a Google | — |
-| `GET /api/v1/auth/google/callback` | — | `code`, `state` | Cookie + redirección a `/admin/` | `403 correo_no_autorizado` · `400 estado_invalido` |
-| `GET /api/v1/auth/me` | N, P | — | `correo`, `rol`, `csrf_token` | — |
-| `POST /api/v1/auth/logout` | N, P | — | 204 | — |
+| `GET /api/v1/auth/google/login` | — | — | Redirección a Google + cookie temporal de OAuth | `503 auth_no_configurada` |
+| `GET /api/v1/auth/google/callback` | — | `code`, `state` | Cookie + redirección a `/admin/` | `400 estado_invalido` · `403 correo_no_autorizado` · `403 identidad_no_verificada` · `502 proveedor_no_disponible` · `503 auth_no_configurada` |
+| `GET /api/v1/auth/me` | N, P | — | `correo`, `rol` (`admin` o `lector`), `csrf_token` | — |
+| `POST /api/v1/auth/logout` | N, P | — (`X-CSRF-Token`) | 204 y borra la cookie | — |
+
+Los errores de `login` y `callback` son **páginas HTML** con textos fijos, porque los ve el navegador al volver de Google; nunca muestran el correo ni valores recibidos. Si la persona cancela en Google (`error` en el callback), vuelve a `/admin/` sin sesión. Implementación: fase I-6 (ADR 0005, notas de implementación).
 
 ### Invitaciones
 

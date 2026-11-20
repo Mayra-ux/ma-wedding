@@ -60,14 +60,34 @@ def escribir_en_env(ruta: Path, valores: dict[str, str], reemplazar: bool) -> No
     ruta.write_text("\n".join(lineas) + "\n", encoding="utf-8")
 
 
+def claves_con_valor(ruta: Path) -> set[str]:
+    """Variables del .env que ya tienen un valor real (no vacío ni marcador)."""
+    if not ruta.exists():
+        return set()
+    con_valor = set()
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        clave, sep, valor = linea.partition("=")
+        if sep and not clave.lstrip().startswith("#") and valor.strip() not in ("", MARCADOR):
+            con_valor.add(clave.strip())
+    return con_valor
+
+
 def _generar_llaves(env_file: str | None, reemplazar: bool) -> int:
+    from app.sesiones_panel import generar_secreto_sesion
     from app.tokens import generar_llaves_env
 
-    valores = generar_llaves_env()
+    valores = generar_llaves_env() | {"SESSION_SECRET": generar_secreto_sesion()}
     if env_file:
-        escribir_en_env(Path(env_file), valores, reemplazar)
+        ruta = Path(env_file)
+        # Sin --reemplazar solo se llenan las que faltan: nunca se pisan llaves existentes.
+        existentes = set() if reemplazar else claves_con_valor(ruta) & set(valores)
+        nuevas = {k: v for k, v in valores.items() if k not in existentes}
+        if nuevas:
+            escribir_en_env(ruta, nuevas, reemplazar)
         print(
-            f"generar-llaves: {', '.join(valores)} escritas en {env_file} (valores no mostrados)."
+            f"generar-llaves: escritas en {env_file}: {', '.join(nuevas) or 'ninguna'}"
+            f"{'; ya existían: ' + ', '.join(sorted(existentes)) if existentes else ''}"
+            " (valores no mostrados)."
         )
     else:
         for clave, valor in valores.items():
@@ -100,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("migrate", help="Aplica las migraciones (usuario de migraciones).")
     sub.add_parser("seed-dev", help="Carga datos ficticios de desarrollo.")
-    gen = sub.add_parser("generar-llaves", help="Genera llaves nuevas de tokens.")
+    gen = sub.add_parser("generar-llaves", help="Genera llaves de tokens y SESSION_SECRET.")
     gen.add_argument("--env-file", help="Escribe en este .env en vez de imprimir.")
     gen.add_argument(
         "--reemplazar", action="store_true", help="Solo local: pisa llaves existentes."

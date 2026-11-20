@@ -108,7 +108,10 @@ class SesionAdmin(Base):
     correo: Mapped[str] = mapped_column(String(254))
     secreto_csrf: Mapped[bytes] = mapped_column(LargeBinary)
     creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=NOW)
-    expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # máximo absoluto
+    ultima_actividad: Mapped[datetime] = mapped_column(  # cierre por inactividad (I-6)
+        DateTime(timezone=True), server_default=NOW
+    )
 
 
 class EventoAuditoria(Base):

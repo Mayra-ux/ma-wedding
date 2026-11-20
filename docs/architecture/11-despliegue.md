@@ -42,19 +42,21 @@ Solo los **nombres** y su propósito. Los valores reales nunca van al repositori
 | `TOKEN_HASH_KEY` | Llave HMAC-SHA-256 de los tokens: base64url de 32 bytes | ✔ |
 | `TOKEN_HASH_KEY_PREVIOUS` | Llave HMAC anterior, **solo durante una rotación** (la búsqueda la prueba después de la actual) | ✔ |
 | `TOKEN_ENCRYPTION_KEYS` | Llaves AES-256-GCM `id:base64url32,id:base64url32`; la primera es la actual; `id` ⊂ `[a-z0-9_-]{1,32}` | ✔ |
-| `SESSION_SECRET` | Firma de identificadores de sesión y del estado de OAuth | ✔ |
+| `SESSION_SECRET` | Firma de identificadores de sesión y del estado de OAuth: base64url de 32 bytes o más; lo escribe `generar-llaves --env-file` | ✔ |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Cliente OAuth de Google | — / ✔ |
-| `ADMIN_EMAILS_NOVIOS` / `ADMIN_EMAILS_PLANNER` | Listas de correos por rol | ✔ (no exponer) |
+| `ADMIN_EMAILS_NOVIOS` / `ADMIN_EMAILS_PLANNER` | Listas de correos por rol, separadas por comas; un correo no puede estar en ambas | ✔ (no exponer) |
+| `PANEL_ORIGIN` | Origen público de la API y del panel (I-6): base de la URI de redirección de Google (`<PANEL_ORIGIN>/api/v1/auth/google/callback`) y valor esperado de `Origin` en las escrituras. `https` salvo localhost; por defecto `http://localhost:8000` | — |
+| `SESION_INACTIVIDAD_HORAS` / `SESION_MAXIMA_DIAS` | Cierre de la sesión del panel: 8 h sin actividad / 7 días como máximo | — |
 | `INVITATION_ORIGIN` | Origen de la invitación: CORS de la API pública y base del enlace `/#t=`. Solo esquema y host; `https` salvo `localhost`/`127.0.0.1` | — |
 | `RATE_LIMIT_TOKEN_LOOKUP_PER_HOUR` / `RATE_LIMIT_TOKEN_RESPONSE_PER_HOUR` / `RATE_LIMIT_IP_PER_HOUR` | Umbrales (ADR 0019): 20 / 10 / 300 por hora | — |
 | `FORWARDED_ALLOW_IPS` | Proxies de confianza para `X-Forwarded-For` (la lee uvicorn; la imagen usa `127.0.0.1`). Se ajusta al elegir proveedor: de ella depende la IP del rate limiting | — |
 | `SECURITY_HSTS` | `true` solo con el dominio definitivo (ADR 0019 y 0021); por defecto `false` | — |
-| `MAX_BODY_PUBLIC` / `MAX_BODY_ADMIN` / `MAX_IMPORT_FILE` | Tamaños máximos (público: 4096 bytes) | — |
+| `MAX_BODY_PUBLIC` / `MAX_BODY_ADMIN` / `MAX_IMPORT_FILE` | Tamaños máximos (público: 4096 bytes; panel: 65536) | — |
 | `BACKUP_*` | Destino y llave de cifrado de respaldos (si los hace la imagen) | ✔ |
 | `ALERT_*` | Canal de alertas de `purge` y `backup` (pendiente) | ✔ |
 | `LOG_LEVEL` | Nivel de registro | — |
 
-Ya no hay `PANEL_ORIGIN` (el panel es el mismo origen) ni `PUBLIC_INVITATION_URL` (se deriva de `INVITATION_ORIGIN`). Las fechas (cierre, congelamiento, borrado) viven en la configuración del evento en la DB.
+`PANEL_ORIGIN` volvió en I-6 (decisión aprobada; ADR 0005, notas de implementación) para la URI de redirección de Google y la verificación de `Origin`; el panel sigue en el mismo origen que la API. Ya no hay `PUBLIC_INVITATION_URL` (se deriva de `INVITATION_ORIGIN`). Las fechas (cierre, congelamiento, borrado) viven en la configuración del evento en la DB.
 
 ## Enlaces y llaves de tokens (fase I-3)
 
@@ -129,3 +131,11 @@ El enlace es `INVITATION_ORIGIN + "/#t=" + token` y se arma al consultarlo (se d
 | Local | Ficticios, Postgres en contenedor | Desarrollo (I-1 en adelante) |
 | Pruebas | Ficticios | Despliegue, restauración y prueba del fragmento en WhatsApp |
 | Producción | Reales | Solo tras aprobar I-5, el aviso de privacidad y la lista de salida de I-10 |
+
+## Login con Google (fase I-6)
+
+- El cliente OAuth lo crea Mayra en Google Cloud: tipo **Aplicación web**, pantalla de consentimiento **Externa** en modo **Prueba** con los correos autorizados como usuarios de prueba, y solo los alcances `openid` y `email`.
+- **Un cliente por entorno.** Local: URI de redirección `http://localhost:8000/api/v1/auth/google/callback`. Producción (I-10): `<PANEL_ORIGIN>/api/v1/auth/google/callback` con el dominio de la API.
+- El secreto del cliente solo se escribe en las variables de entorno, nunca en el repo.
+- En local, las cookies `Secure` y `__Host-` funcionan en `http://localhost` con Chrome o Edge; Safari no las acepta en http.
+- Después de cambiar las listas de correos hay que recrear el contenedor (`docker compose up -d --force-recreate api`): las listas se leen al arrancar.

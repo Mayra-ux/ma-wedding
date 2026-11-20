@@ -77,3 +77,5 @@ Precisiones técnicas que no cambian la decisión (ADR 0023).
 - ~~Herramienta de escaneo de secretos~~ — resuelto en I-1: gitleaks v8.30.1 mediante pre-commit.
 - Precisiones de implementación de tokens y rotación: ver ADR 0022.
 - **API pública (I-4, 14 nov 2026):** el rate limiting es un limitador propio en memoria (ventana deslizante de 1 h, sin dependencias nuevas); la clave por token es su HMAC, nunca el token. La IP del cliente la resuelve uvicorn con `X-Forwarded-For` solo desde los proxies de `FORWARDED_ALLOW_IPS`. HSTS se activa con `SECURITY_HSTS` al tener el dominio definitivo.
+
+- **Panel (I-6, 15 nov 2026):** la migración 0004 agrega `sesion_admin.ultima_actividad` (cierre por 8 h de inactividad) y otorga al usuario de ejecución **solo** `UPDATE (ultima_actividad)` en esa tabla. El cuerpo máximo de `/api/v1/auth` y `/api/v1/admin` es de 64 KB (`MAX_BODY_ADMIN`). Los errores de configuración no muestran valores (`hide_input_in_errors`), para que nunca impriman correos ni llaves. Login y callback tienen su propio límite por IP.

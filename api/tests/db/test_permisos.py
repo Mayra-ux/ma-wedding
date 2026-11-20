@@ -41,6 +41,11 @@ def test_ejecucion_no_puede_ddl(app_conn: Connection, ddl: str) -> None:
         "DELETE FROM configuracion_evento",
         "UPDATE evento_auditoria SET accion = 'x'",  # auditoría inmutable
         "UPDATE invitacion_rol SET rol = 'Paje'",
+        # sesion_admin: solo ultima_actividad (I-6); correo, CSRF y vencimiento no cambian.
+        "UPDATE sesion_admin SET correo = 'x@ejemplo.invalid'",
+        "UPDATE sesion_admin SET expira_en = now() + interval '1 year'",
+        "UPDATE sesion_admin SET secreto_csrf = decode('00', 'hex')",
+        "UPDATE sesion_admin SET hash_sesion = hash_sesion",
         "SELECT * FROM alembic_version",
     ],
 )
@@ -59,6 +64,7 @@ def test_ejecucion_si_puede_operar_datos(app_conn: Connection) -> None:
     app_conn.execute(
         text("INSERT INTO evento_auditoria (actor, accion) VALUES ('a@ejemplo.invalid', 'prueba')")
     )
+    app_conn.execute(text("UPDATE sesion_admin SET ultima_actividad = now()"))  # I-6
 
 
 def test_atributos_de_los_roles(migrator_engine: Engine) -> None:
