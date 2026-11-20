@@ -54,3 +54,5 @@ Registrar cada decisión relevante como un ADR (Architecture Decision Record) en
 | 0023 | Notas de implementación en ADRs aceptados (reemplaza parcialmente al 0001) |
 | 0024 | Textos de la invitación, canal de contacto, aviso de privacidad y salida a producción de I-5 (reemplaza parcialmente al 0011) |
 | 0025 | Nueva fecha límite del RSVP: sábado 30 de enero de 2027 (reemplaza parcialmente al 0016) |
+| 0026 | Lista de confirmaciones, resumen, recordatorios y privilegios de la planner (reemplaza parcialmente al 0005, al 0017 y al 0018) |
+| 0027 | Congelamiento por rol (reemplaza parcialmente al 0016, al 0017 y al 0024) |

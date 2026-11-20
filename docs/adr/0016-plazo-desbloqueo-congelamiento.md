@@ -1,10 +1,10 @@
 # ADR 0016 — Plazo, desbloqueo y congelamiento del RSVP
 
-- **Estado:** Reemplazado parcialmente por ADR 0025
+- **Estado:** Reemplazado parcialmente por ADR 0025 y ADR 0027
 - **Fecha:** 2026-11-02
 - **Reemplaza parcialmente:** ADR 0007 (instante de cierre, reglas del desbloqueo, respuestas del admin) y ADR 0011 (tabla de estados y fecha del mensaje c)
 
-> Nota: el ADR 0025 adelanta el cierre del plazo a `2027-01-31T00:00-06:00` (último día: sábado 30 de enero de 2027). El resto de este ADR sigue vigente.
+> Nota: el ADR 0025 adelanta el cierre del plazo a `2027-01-31T00:00-06:00` (último día: sábado 30 de enero de 2027). El ADR 0027 cambia el congelamiento: para los invitados el sábado 6 de febrero de 2027 00:00 (−06:00), para la planner el 7 de marzo de 2027 00:00 y para los novios ninguno; «congelada» usa el texto de «cerrada». El resto de este ADR sigue vigente.
 
 ## Contexto
 

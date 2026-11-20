@@ -13,7 +13,7 @@ from tests.db.util import invitacion_con_enlace, versiones
 LOOKUP = "/api/v1/public/invitation/lookup"
 RESPONSE = "/api/v1/public/invitation/response"
 CIERRE = datetime(2027, 1, 31, 0, 0, tzinfo=MX)  # ADR 0025
-CONGELA = datetime(2027, 3, 7, 0, 0, tzinfo=MX)
+CONGELA = datetime(2027, 2, 6, 0, 0, tzinfo=MX)  # ADR 0027
 S = timedelta(seconds=1)
 
 

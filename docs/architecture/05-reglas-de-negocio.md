@@ -39,9 +39,9 @@ Catálogo de reglas aceptadas. Garantía: **DB**, **API** o **Ambas**; la interf
 |---|---|---|---|
 | C1 | Fecha límite configurable. El plazo está cerrado cuando `ahora ≥ 2027-01-31T00:00-06:00`; se presenta como "Confirma a más tardar el sábado 30 de enero de 2027" (ADR 0025) | API (configuración) | 0007, 0016, 0025 |
 | C2 | Con el plazo cerrado, el invitado no crea ni cambia respuestas (`409 plazo_cerrado`), salvo desbloqueo vigente | API | 0007, 0016 |
-| C3 | El desbloqueo solo se permite después del plazo, y su vencimiento nunca supera el congelamiento | API | 0016 |
-| C4 | Los novios pueden registrar respuestas después del plazo y hasta el congelamiento, con auditoría y origen = admin | Ambas | 0016 |
-| C5 | Congelamiento: domingo 7 mar 2027 00:00 (−06:00), configurable. Desde ese instante nadie crea, cambia ni desbloquea respuestas; el panel queda en solo lectura + exportación | API | 0016 |
+| C3 | El desbloqueo solo se permite después del plazo, y su vencimiento nunca supera el congelamiento de los invitados: ventana del 31 de enero al 5 de febrero de 2027 | API | 0016, 0027 |
+| C4 | Los novios registran respuestas en cualquier momento, con auditoría y origen = admin | Ambas | 0016, 0027 |
+| C5 | Congelamiento por rol, configurable: invitados el sábado 6 feb 2027 00:00 (−06:00), aunque tengan un desbloqueo; planner el 7 mar 2027 00:00 (desde entonces solo lectura); novios, ninguno. «Congelada» usa el texto de «cerrada» | API | 0027 |
 | C6 | Estados RSVP: abierta, sin token, enlace no válido, cerrada (con/sin respuesta), congelada (con/sin respuesta). La invitación siempre se ve completa | Frontend + API | 0011, 0016 |
 | C7 | El mensaje (c) muestra siempre la fecha límite global, tomada de la configuración | Frontend + API | 0016 |
 
@@ -66,9 +66,9 @@ Catálogo de reglas aceptadas. Garantía: **DB**, **API** o **Ambas**; la interf
 
 | # | Regla | Garantía | ADR |
 |---|---|---|---|
-| E1 | Login con Google restringido a listas de correos; novios = total, planner = lectura + exportación | API | 0005 |
+| E1 | Login con Google restringido a listas de correos; novios = total; planner = ve todo salvo los enlaces personales, exporta y solo marca recordatorios | API | 0005, 0026 |
 | E2 | El panel lo sirve la API (mismo origen, enrutado por hash); cookie `Secure`/`HttpOnly`/`SameSite=Strict` y CSRF en toda escritura | API | 0005, 0015 |
-| E3 | La planner ve alergias pero no los mensajes del invitado; no ve ni gestiona enlaces, no usa WhatsApp, no ve la auditoría | API | 0017 |
+| E3 | La planner ve todo (incluidos mensajes y auditoría) salvo los enlaces personales: ninguna respuesta le entrega la URL ni el token. Usa WhatsApp solo para recordatorios sin enlace, hasta su cierre | API | 0017, 0026 |
 | E4 | Solo los novios importan | API | 0005, 0009 |
 | E5 | Importación sin estado: vista previa (no guarda nada) y aplicación (se vuelve a subir el archivo, una transacción). Solo se audita el resumen | API | 0018 |
 | E6 | Con código existente se actualiza, sin código se da de alta, con código desconocido es error de fila. Lo que no viene en el archivo no se borra | API | 0009 |
@@ -77,9 +77,10 @@ Catálogo de reglas aceptadas. Garantía: **DB**, **API** o **Ambas**; la interf
 | E9 | Rol: la columna Rol manda. Sin ella, Comentario es rol solo si coincide exactamente con el catálogo; si no, es nota | API | 0018 |
 | E10 | Al reimportar se leen Grupo y Rol; se ignoran ¿Asistirá?, Pases confirmados, Mensaje y Alergias | API | 0009 |
 | E11 | Los duplicados por nombre solo generan aviso | API | 0018 |
-| E12 | Exportación de los novios: Código INV + 14 columnas + Mensaje, Grupo, Rol, Alergias. Exportación de la planner: igual, sin Mensaje. "# Pases" calculado. Sin archivadas. Con protección contra fórmulas | API | 0009, 0018 |
+| E12 | Exportación: Código INV + 14 columnas + Mensaje, Grupo, Rol, Alergias, igual para novios y planner. "# Pases" calculado. Sin archivadas. Con protección contra fórmulas | API | 0009, 0018, 0026 |
 | E13 | Recordatorios: invitaciones con enlace enviado y sin respuesta; WhatsApp al teléfono principal o al contacto alterno | Panel + API | 0003, 0017 |
-| E14 | Se auditan importaciones, exportaciones, desbloqueos, enlaces, archivados, respuestas del admin y ediciones | Ambas | 0005, 0016 |
+| E14 | Se auditan importaciones, exportaciones, desbloqueos, enlaces, archivados, respuestas del admin, ediciones, recordatorios y cada consulta de la lista | Ambas | 0005, 0016, 0026 |
+| E15 | Solo los novios modifican datos, y solo a través de la API; nadie escribe directamente en la DB (usuario de ejecución con privilegios mínimos; estructura solo por migraciones) | API + infraestructura | 0019, 0026 |
 
 ## F. Datos personales, retención y seguridad operativa
 
@@ -88,7 +89,7 @@ Catálogo de reglas aceptadas. Garantía: **DB**, **API** o **Ambas**; la interf
 | F1 | Ningún dato real en el repo, código, seeds, pruebas, documentación ni commits; escaneo de secretos antes de cada commit | Proceso | 0010, 0019 |
 | F2 | Ningún log, error ni respuesta de error contiene tokens ni datos personales; los logs usan una lista cerrada de campos | API | 0019 |
 | F3 | Sin servicios externos de rastreo de errores ni analítica | Proceso | 0019 |
-| F4 | Antes del 5 abr 2027 (ya con el RSVP congelado el 7 mar): exportación final y respaldo final | Proceso | 0010, 0016 |
+| F4 | Antes del 5 abr 2027 (invitados congelados el 6 feb; los novios pueden seguir editando): exportación final y respaldo final, justo antes del primer borrado | Proceso | 0010, 0027 |
 | F5 | 5 abr 2027: se borran teléfonos y alergias, también del historial | Tarea programada + DB | 0010 |
 | F6 | 4 jun 2027: se borra el resto de los datos personales, incluidas las invitaciones archivadas | Tarea programada + DB | 0010, 0017 |
 | F7 | Cada respaldo vence en la fecha de borrado del dato más restrictivo que contenga | Proceso + almacenamiento | 0010 |

@@ -50,7 +50,7 @@ El inicio de las barras es ilustrativo: depende de cuándo arranque el sistema.
 
 ## Respaldo y exportación finales
 
-1. El RSVP se congela el **7 mar 2027 00:00** (ADR 0016). Antes del 5 abr 2027 se hacen la **exportación final** y el **respaldo final**.
+1. El RSVP de los invitados se congela el **6 feb 2027 00:00** y la planner queda en solo lectura el **7 mar 2027 00:00**; los novios pueden seguir editando (ADR 0027). Justo antes del 5 abr 2027 se hacen la **exportación final** y el **respaldo final**.
 2. El respaldo final contiene teléfonos y alergias, así que **vence el 5 abr**, como cualquier otro.
 3. La exportación final descargada se borra o se reemplaza por una versión sin teléfonos ni alergias el **5 abr 2027** (ADR 0010). Este paso es manual de los novios y la planner.
 4. Después del 4 jun no queda ningún respaldo con datos personales.

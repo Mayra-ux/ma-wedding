@@ -8,7 +8,7 @@
 | R2 | Una app o navegador pierde el fragmento `#t=` | El invitado ve el mensaje (a) | Probar con enlaces ficticios en WhatsApp iOS/Android antes de enviar (criterio de I-5) | 0013 |
 | R3 | Marcador guardado sin el token | No puede responder desde el marcador | El mensaje (a) le indica usar su enlace | 0013 |
 | R4 | Se pierde una llave de tokens | No se pueden reenviar los enlaces | Custodia fuera del proveedor; rotación con `rotate-keys`; en el peor caso, regenerar y reenviar | 0008, 0019 |
-| R5 | Las exportaciones descargadas no se borran a tiempo | Teléfonos y alergias fuera de control tras el 5 abr | Auditoría de exportaciones; recordatorio; mención en el aviso de privacidad. La planner no recibe mensajes | 0010, 0018 |
+| R5 | Las exportaciones descargadas no se borran a tiempo | Teléfonos y alergias fuera de control tras el 5 abr | Auditoría de exportaciones; recordatorio; mención en el aviso de privacidad | 0010, 0018, 0026 |
 | R6 | Un respaldo o una restauración reintroduce datos borrados | Incumple la retención | Vencimiento absoluto; `purge` después de restaurar | 0010 |
 | R7 | Arranque en frío | Primera carga lenta del RSVP | Instancia persistente; no usar contenedores serverless | 0004 |
 | R8 | Reimportación que marca para revisión una invitación con enlace enviado | — | Resuelto: el enlace sigue funcionando y el panel avisa (D7) | 0009 |
@@ -33,8 +33,8 @@
 | Q7 | ¿La raíz de la invitación debe indexarse en buscadores? | Encabezados del hosting — I-10 | 0013 |
 | ~~Q8~~ | **Cerrada:** catálogos de lado, grupo y rol definidos en el ADR 0017 | — | 0017 |
 | Q9 | Plantilla del mensaje de WhatsApp | I-9 | 0003 |
-| ~~Q10~~ | **Cerrada:** la planner no ve enlaces ni la auditoría, ni los mensajes del invitado | — | 0017 |
-| ~~Q11~~ | **Cerrada:** congelamiento el domingo 7 mar 2027 00:00 (−06:00), configurable | — | 0016 |
+| ~~Q10~~ | **Cerrada:** la planner ve todo salvo los enlaces personales; solo marca recordatorios (ADR 0026, antes ADR 0017) | — | 0026 |
+| ~~Q11~~ | **Cerrada:** congelamiento por rol: invitados el 6 feb 2027 00:00, planner el 7 mar 2027 00:00, novios ninguno (ADR 0027, antes ADR 0016) | — | 0027 |
 | Q12 | Aprobación visual de I-5: alergias, aviso, estados, carga y error | I-5 | 0011 |
 | Q13 | Texto del mensaje de rate limiting y del error de red | I-5 | 0011 |
 | Q14 | Canal de alertas para `purge` y `backup` | I-10 | 0019 |

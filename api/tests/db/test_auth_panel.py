@@ -469,10 +469,12 @@ def test_planner_403_en_cada_escritura(
     c = panel.cliente()
     r = c.request(metodo, url, headers=planner.escritura())
     if permite_planner:
-        assert r.status_code == 200  # p. ej. la exportación (I-8)
+        # La guardia la deja pasar (la ruta puede responder 404/409/422 por los datos).
+        assert r.status_code != 403, r.text
     else:
         assert r.status_code == 403 and r.json()["error"]["code"] == "sin_permiso"
-    assert c.request(metodo, url, headers=novia.escritura()).status_code == 200
+    # Los novios nunca reciben 403 de la guardia (I-7: las rutas reales dan 404 sin datos).
+    assert c.request(metodo, url, headers=novia.escritura()).status_code != 403
 
 
 def test_planner_puede_leer(panel: Panel) -> None:

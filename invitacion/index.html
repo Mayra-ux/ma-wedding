@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-cPHMkJev+zvkDdxjC556B/KpOAmYkeZcpnjjcjNdgMg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src http://localhost:8000; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-6KrHQbg59u3gZyfSDnH4uXehuvbzc36oqtquunOdsRY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src http://localhost:8000; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="api-base" content="http://localhost:8000">
 <meta name="description" content="Mayra &amp; Alejandro · 06.03.2027 · Toda leyenda comienza con una promesa.">
@@ -657,7 +657,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       errorCarga: 'No pudimos abrir tu invitación. Revisa tu conexión e inténtalo de nuevo.',
       errorEnvio: 'No pudimos guardar tu respuesta. Revisa tu conexión e inténtalo de nuevo.',
       limite: 'Hiciste varios intentos seguidos. Espera unos minutos e inténtalo de nuevo.',
-      congelada: 'Gracias por ser parte de nuestra leyenda. La confirmación de asistencia ya está cerrada.',
       cerradaSin: function(f){ return 'El periodo de confirmación terminó el ' + f + '. Si necesitas confirmar o hacer algún cambio, escríbenos al chat de WhatsApp donde recibiste tu invitación y lo revisamos con gusto.'; },
       cerradaCon: function(r, f){ return 'Tu respuesta quedó registrada: ' + (r.asiste ? lugares(r.confirmados) : 'no podrás acompañarnos') + '. El periodo para modificarla terminó el ' + f + '; si necesitas algún cambio, escríbenos al chat de WhatsApp.'; },
       abiertaCon: function(r, f){ return r.asiste ? 'Ya registramos tu respuesta: ' + lugares(r.confirmados) + '. Puedes modificarla hasta el ' + f + '.' : 'Ya registramos que no podrás acompañarnos. Si cambian tus planes, puedes modificarlo hasta el ' + f + '.'; }
@@ -722,11 +721,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         registrada.textContent = r ? T.abiertaCon(r, f) : ''; registrada.hidden = !r;
         precargar(r);
         errorEl.hidden = true; aviso.hidden = true; aviso.removeAttribute('aria-busy'); done.hidden = true; form.hidden = false;
-      } else if (datos.estado === 'cerrada') {
+      } else { // cerrada o congelada: mismo texto, que invita a escribir al chat (ADR 0027)
         var g = fechaDia(datos.fecha_limite_mostrar); // siempre la fecha límite global (C7)
         mostrarAviso(r ? T.cerradaCon(r, g) : T.cerradaSin(g), false);
-      } else {
-        mostrarAviso(T.congelada, false);
       }
     }
     function consultar(){

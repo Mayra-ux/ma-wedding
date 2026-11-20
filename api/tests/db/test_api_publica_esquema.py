@@ -104,7 +104,7 @@ def test_consulta_no_expone_datos_internos(api, reloj, completa, instante: str) 
     reloj.ahora = {
         "abierta": reloj.ahora,
         "cerrada": datetime(2027, 1, 31, tzinfo=MX),
-        "congelada": datetime(2027, 3, 7, tzinfo=MX) + timedelta(days=1),
+        "congelada": datetime(2027, 2, 6, tzinfo=MX) + timedelta(days=1),
     }[instante]
     r = api.post(LOOKUP, json={"token": completa["token"]})
     datos = r.json()

@@ -60,10 +60,13 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 ## I-7 · API del panel
 - CRUD con las validaciones M1–M14; archivar revoca el enlace y saca la invitación de la lista por defecto y de la exportación.
 - Bajar pases por debajo de los confirmados → `409`.
-- El desbloqueo antes del plazo → `409`; más allá del congelamiento → `422`. Con reloj simulado, la invitación desbloqueada pasa a abierta y vuelve a cerrada al vencer.
-- Respuesta del admin permitida tras el plazo; rechazada tras el congelamiento.
-- La planner no recibe mensajes en el listado, el detalle ni el historial (test).
+- El desbloqueo antes del plazo → `409`; más allá del congelamiento → `422`; pedido después del congelamiento → `409` (ADR 0027). Con reloj simulado, la invitación desbloqueada pasa a abierta y vuelve a cerrada al vencer.
+- Respuesta del admin permitida en cualquier momento: los novios no tienen congelamiento (ADR 0027).
+- La planner no recibe enlaces ni tokens en ninguna respuesta, recibe `403` en toda escritura salvo marcar un recordatorio (hasta su cierre) y ve mensajes, historial y auditoría (ADR 0026; test).
+- Los totales del resumen cuadran con la lista (test). La consulta de la lista queda en la auditoría.
+- La API es el único punto de escritura de la DB (test).
 - Toda escritura deja un evento de auditoría sin datos personales.
+- **Resultado (cerrada, 20 nov 2026; aprobado por Mayra):** todos los criterios se cumplen con pruebas automáticas (542 en total), incluida una prueba de mutación que confirma que fallan si se quitan la lectura solo para novios, la comprobación de pases, el bloqueo del desbloqueo tras el congelamiento o el cierre de la planner. Ninguna de las 17 lecturas del panel entrega a la planner un token o un enlace. Cambio en la invitación: «congelada» usa el texto de «cerrada» (ADR 0027), idéntico píxel a píxel a ese estado en 390 y 1440 px; el resto de la página quedó idéntico salvo ruido de renderizado ≤ 4/255, y las capturas fueron aprobadas. Migración 0005: congelamiento de los invitados el 6 feb 2027 00:00, cierre de la planner el 7 mar 2027 00:00 y tabla `recordatorio_enviado`. Decisiones: ADR 0026 y 0027.
 
 ## I-8 · Importación y exportación
 - Con un archivo ficticio con los encabezados exactos de la planner: altas, actualizaciones, error por código desconocido, revisión por "# Pases" inconsistente, lado inválido y teléfono inválido; aviso de duplicados y de teléfono faltante.
@@ -71,7 +74,7 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - Rol desde Comentario solo con coincidencia exacta; la columna Rol (separada por `;`) manda.
 - La marca de revisión se quita sola al corregir adultos y niños.
 - Reimportar el archivo exportado no cambia nada y no toca respuestas, alergias ni mensajes.
-- Exportación de los novios: 19 columnas exactas y en orden; de la planner: 18, sin Mensaje; "# Pases" calculado; ¿Asistirá? = Sí/No/vacío; sin archivadas; `=HYPERLINK(...)` neutralizado.
+- Exportación: 19 columnas exactas y en orden, iguales para novios y planner (ADR 0026); "# Pases" calculado; ¿Asistirá? = Sí/No/vacío; sin archivadas; `=HYPERLINK(...)` neutralizado.
 
 ## I-9 · Panel React + Vite
 - La API sirve el panel en `/admin/` con enrutado por hash; funciona sin reglas de reescritura.
@@ -83,7 +86,7 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 ## I-10 · Operación y cierre
 - Despliegue con la misma imagen en pruebas; Postgres sin acceso público (verificado desde fuera); TLS hacia la DB.
 - Restauración probada: respaldo → DB nueva → `purge` → la API arranca y los conteos coinciden.
-- Simulación de fechas: con el reloj en el 7 mar no se aceptan cambios; en el 5 abr no quedan teléfonos ni alergias (incluido el historial); en el 4 jun no quedan datos personales. Las ejecuciones son repetibles.
+- Simulación de fechas: con el reloj en el 6 feb los invitados ya no aceptan cambios y en el 7 mar la planner queda en solo lectura, mientras los novios siguen editando (ADR 0027); en el 5 abr no quedan teléfonos ni alergias (incluido el historial); en el 4 jun no quedan datos personales. Las ejecuciones son repetibles.
 - Un fallo forzado de `purge` o `backup` genera una alerta; cada ejecución deja un informe de conteos.
 - Los respaldos tienen vencimiento absoluto configurado.
 - Checklist de salida a producción firmado por Mayra: aviso de privacidad (con apellidos), textos de I-5, dominio, prueba de WhatsApp en iOS y Android, `api-base` y CSP de la invitación apuntando a la API desplegada, Root Directory de Vercel; solo entonces I-5 se une a `main` (ADR 0024).

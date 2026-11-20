@@ -69,9 +69,9 @@ Efecto: en una transacción crea una versión nueva y la marca como vigente (ADR
 
 Mismo origen que el panel; cookie de sesión. `X-CSRF-Token` en toda escritura. Cuerpo máximo de 64 KB (importación: 2 MB). Las invitaciones se identifican por su **código INV**.
 
-Errores comunes: `401 no_autenticado` · `403 sin_permiso` · `403 csrf_invalido` · `404 no_encontrado` · `409 rsvp_congelado` (cualquier escritura de respuestas, desbloqueos o edición tras el congelamiento) · `422 validacion` · `429`.
+Errores comunes: `401 no_autenticado` · `403 sin_permiso` · `403 csrf_invalido` · `404 no_encontrado` · `422 validacion` · `429`. Los novios no tienen congelamiento (ADR 0027): `409 rsvp_congelado` solo aparece al pedir un desbloqueo después del congelamiento de los invitados.
 
-Rol: **N** = novios, **P** = planner.
+Rol: **N** = novios, **P** = planner. La planner ve todo salvo los enlaces personales y su única escritura es marcar un recordatorio como enviado (ADR 0026). Ninguna respuesta incluye la URL del enlace ni el token, salvo `GET …/link` (solo N).
 
 ### Sesión
 
@@ -88,21 +88,22 @@ Los errores de `login` y `callback` son **páginas HTML** con textos fijos, porq
 
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
-| `GET /api/v1/admin/invitations` | N, P | `incluir_archivadas` (opcional) | **Lista completa sin paginar**: código, nombre, pases, adultos, niños, infantes, lado, grupo, roles, mesa, teléfonos, estado de respuesta, confirmados, alergias, en revisión, enlace activo/enviado. **Para N** incluye el mensaje; **para P**, no. El panel filtra y calcula estadísticas y recordatorios en el navegador | — |
-| `GET /api/v1/admin/invitations/{codigo}` | N, P | — | Detalle + respuesta vigente (sin mensaje para P) | — |
-| `POST /api/v1/admin/invitations` | N | Nombre, adultos, niños, infantes, lado, grupo, roles, mesa, nota, teléfonos | 201 con el código INV | `422 validacion` |
-| `PATCH /api/v1/admin/invitations/{codigo}` | N | Campos a cambiar | Invitación actualizada; la marca de revisión se recalcula | `409 pases_menores_que_confirmados` |
+| `GET /api/v1/admin/invitations` | N, P | `incluir_archivadas` (opcional) | **Lista completa sin paginar** (campos en el ADR 0026): datos de la invitación, estado (`pendiente`, `confirmada`, `no_asiste`), confirmados, última respuesta (fecha y origen), alergias, mensaje, nota, teléfonos, revisión, desbloqueo, archivada e **indicadores** del enlace (activo, enviado, recordatorios); nunca la URL. Cada consulta queda en la auditoría (`consulta_lista`) | — |
+| `GET /api/v1/admin/summary` | N, P | — | Totales de las invitaciones activas: invitaciones, pases, confirmados, niños, infantes, y por estado, lado, grupo y rol | — |
+| `GET /api/v1/admin/invitations/{codigo}` | N, P | — | La fila de la lista + `pases_planner_original`, `creada_en`, `actualizada_en` | — |
+| `POST /api/v1/admin/invitations` | N | Nombre, adultos, niños, infantes, lado, grupo, roles, mesa, nota, No. de la planner, teléfonos | 201 con el código INV (el siguiente número) | `422 validacion` |
+| `PATCH /api/v1/admin/invitations/{codigo}` | N | Campos a cambiar | Invitación actualizada; la marca de revisión se recalcula | `409 pases_menores_que_confirmados` · `409 archivada` |
 | `POST /api/v1/admin/invitations/{codigo}/archive` | N | — | Archivada; enlace revocado | `409 ya_archivada` |
 | `POST /api/v1/admin/invitations/{codigo}/restore` | N | — | Activa, sin enlace | `409 no_archivada` |
-| `POST /api/v1/admin/invitations/{codigo}/unlock` | N | `hasta` | `desbloqueada_hasta` | `409 plazo_aun_abierto` · `422 mas_alla_del_congelamiento` |
+| `POST /api/v1/admin/invitations/{codigo}/unlock` | N | `hasta` (ISO 8601 con zona) | `desbloqueada_hasta`. Ventana: del 31 ene al 5 feb 2027 | `409 plazo_aun_abierto` · `409 rsvp_congelado` · `409 archivada` · `422 mas_alla_del_congelamiento` |
 | `DELETE /api/v1/admin/invitations/{codigo}/unlock` | N | — | Sin desbloqueo | — |
 
 ### Respuestas e historial
 
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
-| `GET /api/v1/admin/invitations/{codigo}/history` | N, P | — | Versiones (sin mensaje para P) | — |
-| `PUT /api/v1/admin/invitations/{codigo}/response` | N | `asiste`, `confirmados`, `alergias`, `mensaje` | Nueva versión vigente, origen admin; se permite después del plazo y hasta el congelamiento | `422 confirmados_fuera_de_rango` |
+| `GET /api/v1/admin/invitations/{codigo}/history` | N, P | — | Versiones con fecha, origen, actor y mensaje | — |
+| `PUT /api/v1/admin/invitations/{codigo}/response` | N | `asiste`, `confirmados`, `alergias`, `mensaje` | Nueva versión vigente, origen admin; se permite en cualquier momento (ADR 0027) | `422 confirmados_fuera_de_rango` · `409 archivada` |
 
 ### Enlaces
 
@@ -116,23 +117,29 @@ Los errores de `login` y `callback` son **páginas HTML** con textos fijos, porq
 
 El botón de WhatsApp del panel arma el texto (plantilla de los novios, pendiente) y el enlace `wa.me` con el teléfono principal o el del contacto alterno, y llama a `link/sent` con `origen = whatsapp`.
 
+### Recordatorios sin enlace (ADR 0026)
+
+| Recurso / método | Rol | Entrada | Salida | Errores propios |
+|---|---|---|---|---|
+| `GET /api/v1/admin/invitations/{codigo}/reminder` | N, P | `destino` (`principal` o `alterno`) | `tipo` (`confirmar` hasta el 30 ene; `evento` del 31 ene al 6 mar), `texto` sin enlace, `telefono`, `wa_url` | `409 recordatorios_cerrados` · `409 sin_telefono` · `409 archivada` |
+| `POST /api/v1/admin/invitations/{codigo}/reminder/sent` | N, P | `destino` | `tipo` y `destino`; queda en `recordatorio_enviado` y en la auditoría | Los mismos |
+
 ### Importación y exportación
 
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
 | `POST /api/v1/admin/imports/preview` | N | Archivo xlsx o csv | Resultado por fila (alta, actualización, error, revisión, avisos de duplicado y de teléfono faltante). **No guarda nada** | `415 formato_no_soportado` · `422 columnas_faltantes` · `413` |
 | `POST /api/v1/admin/imports/apply` | N | El mismo archivo | Resumen aplicado + invitaciones del sistema que no venían en el archivo; un evento de auditoría con los conteos | Los mismos de preview |
-| `POST /api/v1/admin/exports` | N, P | `formato` | Archivo: 19 columnas para N, 18 (sin Mensaje) para P; sin archivadas; con protección contra fórmulas | — |
+| `POST /api/v1/admin/exports` | N, P | `formato` | Archivo de 19 columnas para los dos roles (ADR 0026); sin archivadas; con protección contra fórmulas | — |
 
 ### Configuración y auditoría
 
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
-| `GET /api/v1/admin/config` | N, P | — | Cierre del plazo, congelamiento, fechas de borrado | — |
-| `PATCH /api/v1/admin/config` | N | `cierre_plazo`, `congelamiento` | Configuración actualizada | `422 fecha_invalida` (el congelamiento debe ser posterior al cierre) |
-| `GET /api/v1/admin/audit` | N | — | Eventos (lista completa) | — |
+| `GET /api/v1/admin/config` | N, P | — | Cierre del plazo, fecha límite a mostrar, congelamiento, cierre de la planner, fechas de borrado | — |
+| `GET /api/v1/admin/audit` | N, P | — | Eventos (lista completa), sin datos de los invitados | — |
 
-Las fechas de borrado se muestran pero no se editan desde el panel: son una decisión del ADR 0010.
+Las fechas no se editan desde el panel: la configuración es de solo lectura para el usuario de ejecución y se cambia por migración (ADR 0026). `PATCH /config` no se implementa.
 
 ### Salud
 
@@ -149,7 +156,7 @@ Las fechas de borrado se muestran pero no se editan desde el panel: son una deci
 | `solicitud_invalida` | 400 | Pública | Error genérico con opción de reintentar |
 | `enlace_no_valido` | 404 | Pública | Mensaje (b) |
 | `plazo_cerrado` | 409 | Pública | Mensaje (c) o la respuesta registrada |
-| `rsvp_congelado` | 409 | Panel | Sistema congelado; solo lectura |
+| `rsvp_congelado` | 409 | Panel | Ya no se puede desbloquear: los invitados están congelados |
 | `confirmados_fuera_de_rango` | 422 | Ambas | Corrige el stepper |
 | `validacion` | 422 | Ambas | Mensaje por campo |
 | `cuerpo_demasiado_grande` | 413 | Ambas | Archivo o texto demasiado grande |
@@ -158,3 +165,5 @@ Las fechas de borrado se muestran pero no se editan desde el panel: son una deci
 | `requiere_revision` / `archivada` | 409 | Panel | Corregir o restaurar antes de generar el enlace |
 | `plazo_aun_abierto` / `mas_alla_del_congelamiento` | 409 / 422 | Panel | Límites del desbloqueo |
 | `pases_menores_que_confirmados` | 409 | Panel | Ajustar la respuesta antes de bajar los pases |
+| `ya_archivada` / `no_archivada` | 409 | Panel | Estado de archivo |
+| `recordatorios_cerrados` / `sin_telefono` | 409 | Panel | Recordatorios: periodo terminado o sin ese teléfono |

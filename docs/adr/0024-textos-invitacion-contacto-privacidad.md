@@ -1,9 +1,11 @@
 # ADR 0024 — Textos de la invitación, canal de contacto, aviso de privacidad y salida a producción de I-5
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0027
 - **Fecha:** 2026-11-15
 - **Reemplaza parcialmente:** ADR 0011 (textos de los mensajes a, b y c, que dependían del canal de contacto)
 - **Complementa:** ADR 0010 (aviso de privacidad), ADR 0013, ADR 0016, ADR 0021 y ADR 0025
+
+> Nota: el ADR 0027 reemplaza el texto del estado «Congelada»: ahora usa el mismo texto que «Cerrada» (con o sin respuesta). El resto de este ADR sigue vigente.
 
 ## Contexto
 

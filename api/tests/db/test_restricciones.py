@@ -352,16 +352,17 @@ def test_copia_cifrada_exactamente_44_bytes(app_conn: Connection, largo: int) ->
 
 
 # ------------------------------------------------------------------ configuración
-def test_configuracion_inicial(app_conn: Connection) -> None:  # ADR 0010, 0016, 0025
+def test_configuracion_inicial(app_conn: Connection) -> None:  # ADR 0010, 0016, 0025, 0027
     fila = app_conn.execute(
         text(
             "SELECT cierre_plazo = '2027-01-31T00:00:00-06:00', "
-            "congelamiento = '2027-03-07T00:00:00-06:00', "
+            "congelamiento = '2027-02-06T00:00:00-06:00', "
+            "cierre_planner = '2027-03-07T00:00:00-06:00', "
             "fecha_borrado_1 = '2027-04-05', fecha_borrado_2 = '2027-06-04' "
             "FROM configuracion_evento"
         )
     ).all()
-    assert fila == [(True, True, True, True)]
+    assert fila == [(True, True, True, True, True)]
 
 
 def test_configuracion_unica_y_ordenada(migrator_engine) -> None:
@@ -374,4 +375,13 @@ def test_configuracion_unica_y_ordenada(migrator_engine) -> None:
         )
         falla_con(conn, CHECK, "UPDATE configuracion_evento SET congelamiento = cierre_plazo")
         falla_con(conn, CHECK, "UPDATE configuracion_evento SET fecha_borrado_2 = '2027-04-01'")
+        # ADR 0027: el cierre de la planner no es anterior al congelamiento ni pasa del borrado.
+        falla_con(
+            conn,
+            CHECK,
+            "UPDATE configuracion_evento SET cierre_planner = congelamiento - interval '1 second'",
+        )
+        falla_con(
+            conn, CHECK, "UPDATE configuracion_evento SET cierre_planner = '2027-04-06T00:00-06:00'"
+        )
         conn.rollback()
