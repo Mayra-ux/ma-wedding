@@ -47,7 +47,7 @@ sequenceDiagram
 ```
 
 - El canje del código lo hace la API (code flow con PKCE en el servidor). El panel nunca maneja tokens de Google.
-- Las listas de correos vienen de dos variables de entorno, se comparan en minúsculas y exactas, y el rol se resuelve **en cada petición**.
+- Las listas de correos vienen de dos variables de entorno, se comparan en minúsculas y exactas, y el rol se resuelve **en cada petición**. En la API los roles se llaman `admin` (novios) y `lector` (planner). Un correo en las dos listas impide que la API arranque.
 - El proyecto OAuth de Google lo crea Mayra (Claude no crea servicios). La URI de redirección depende del origen de la API.
 
 ### Sesión y cookies
@@ -58,6 +58,9 @@ sequenceDiagram
 | Cookie | `__Host-` + `Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/` (posible al ser el mismo origen, ADR 0015) |
 | Duración | Expira tras 8 h de inactividad y como máximo a los 7 días |
 | Cierre | `POST logout` borra la sesión en el servidor y la cookie |
+| Actividad | `ultima_actividad` se actualiza como mucho cada 5 min (migración 0004) |
+| Estado de OAuth | Cookie temporal `__Host-ma_oauth`, firmada con HMAC (llave derivada de `SESSION_SECRET`), `SameSite=Lax` porque la vuelta de Google es entre sitios, 10 min, un solo uso |
+| Login rechazado | 403 sin sesión; no se guarda el correo (solo un log sin datos personales) |
 
 ### CSRF
 

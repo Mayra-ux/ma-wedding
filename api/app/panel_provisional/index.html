@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Panel M&amp;A</title>
+<link rel="stylesheet" href="panel.css">
+<script src="panel.js" defer></script>
+</head>
+<body>
+<main>
+  <p class="etiqueta">PANEL M&amp;A · PROVISIONAL</p>
+  <h1>Panel de la boda</h1>
+  <p class="nota">Esta es una página provisional para probar el inicio de sesión (fase I-6). El panel completo llega en la fase I-9.</p>
+
+  <section id="cargando" aria-live="polite"><p>Comprobando tu sesión…</p></section>
+
+  <section id="sin-sesion" hidden>
+    <p>Inicia sesión con una cuenta de Google autorizada.</p>
+    <p><a class="boton" href="/api/v1/auth/google/login">Iniciar sesión con Google</a></p>
+  </section>
+
+  <section id="con-sesion" hidden>
+    <p>Sesión iniciada como <strong id="correo"></strong>.</p>
+    <p>Rol: <strong id="rol"></strong></p>
+    <p><button type="button" class="boton" id="salir">Cerrar sesión</button></p>
+  </section>
+
+  <p id="error" class="error" role="alert" hidden></p>
+</main>
+</body>
+</html>

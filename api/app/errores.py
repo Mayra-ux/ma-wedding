@@ -29,6 +29,11 @@ MENSAJES: dict[str, str] = {
     "no_encontrado": "No encontrado.",
     "metodo_no_permitido": "Método no permitido.",
     "error_interno": "Ocurrió un error. Intenta de nuevo.",
+    # Panel (I-6)
+    "no_autenticado": "Inicia sesión para continuar.",
+    "sin_permiso": "No tienes permiso para esta acción.",
+    "csrf_invalido": "La solicitud no es válida. Recarga el panel e inténtalo de nuevo.",
+    "auth_no_configurada": "El inicio de sesión no está configurado.",
 }
 
 

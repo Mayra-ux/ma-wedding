@@ -70,6 +70,7 @@ erDiagram
     string correo
     string secreto_csrf
     datetime expira
+    datetime ultima_actividad
   }
 
   EVENTO_AUDITORIA {
@@ -172,6 +173,7 @@ Antes de **crear una versión de respuesta** o de **modificar pases**, la API bl
 | Esquema | Dueño de la base y de todas las tablas | Solo `USAGE`; sin `CREATE`, sin `TEMP` |
 | `configuracion_evento` | — | `SELECT` |
 | `invitacion` | — | `SELECT, INSERT, UPDATE, DELETE` (el `DELETE` es para la purga) |
-| `invitacion_rol`, `sesion_admin`, `evento_auditoria` | — | `SELECT, INSERT, DELETE` |
+| `invitacion_rol`, `evento_auditoria` | — | `SELECT, INSERT, DELETE` |
+| `sesion_admin` | — | `SELECT, INSERT, DELETE` + `UPDATE (ultima_actividad)` (I-6) |
 | `version_respuesta` | — | `SELECT, INSERT, DELETE` + `UPDATE (vigente, alergias)` |
 | `enlace` | — | `SELECT, INSERT, DELETE` + `UPDATE (revocado_en, hmac_token, token_cifrado, id_llave)` |
