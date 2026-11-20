@@ -48,6 +48,13 @@ MENSAJES: dict[str, str] = {
     "recordatorios_cerrados": "El periodo de recordatorios terminó.",
     "sin_telefono": "La invitación no tiene ese teléfono.",
     "conflicto_codigo": "No se pudo asignar el código. Inténtalo de nuevo.",
+    # Importación y exportación (I-8)
+    "formato_no_soportado": "Solo se aceptan archivos .xlsx o .csv.",
+    "archivo_no_valido": "El archivo no es válido o está dañado.",
+    "columnas_faltantes": "Al archivo le faltan columnas de la planner.",
+    "hoja_requerida": "Elige la hoja que quieres importar.",
+    "hoja_no_encontrada": "No se encontró esa hoja de invitados en el archivo.",
+    "archivo_con_errores": "El archivo tiene filas con errores; no se aplicó nada.",
 }
 
 

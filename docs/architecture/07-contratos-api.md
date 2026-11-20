@@ -128,9 +128,9 @@ El botón de WhatsApp del panel arma el texto (plantilla de los novios, pendient
 
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
-| `POST /api/v1/admin/imports/preview` | N | Archivo xlsx o csv | Resultado por fila (alta, actualización, error, revisión, avisos de duplicado y de teléfono faltante). **No guarda nada** | `415 formato_no_soportado` · `422 columnas_faltantes` · `413` |
-| `POST /api/v1/admin/imports/apply` | N | El mismo archivo | Resumen aplicado + invitaciones del sistema que no venían en el archivo; un evento de auditoría con los conteos | Los mismos de preview |
-| `POST /api/v1/admin/exports` | N, P | `formato` | Archivo de 19 columnas para los dos roles (ADR 0026); sin archivadas; con protección contra fórmulas | — |
+| `POST /api/v1/admin/imports/preview` | N | El archivo **en el cuerpo** (`Content-Type` xlsx o `text/csv`, máximo 2 MB); `hoja` y `lado_por_defecto` (opcionales, en la URL) | Resumen (altas, actualizaciones, sin cambios, errores, en revisión, avisos, posibles duplicados y advertencia) y resultado por fila con sus cambios, errores, motivos de revisión y avisos; invitaciones del sistema que no vienen en el archivo. **No guarda nada** | `415 formato_no_soportado` · `415 archivo_no_valido` · `422 columnas_faltantes` · `422 hoja_requerida` · `422 hoja_no_encontrada` · `413` |
+| `POST /api/v1/admin/imports/apply` | N | El mismo archivo y los mismos parámetros | Lo mismo que preview, ya aplicado en una transacción; un evento de auditoría con los conteos | Los de preview · `409 archivo_con_errores` (no escribe nada) |
+| `POST /api/v1/admin/exports` | N, P | `formato` (`xlsx` o `csv`), `solo_confirmados` | Archivo de 19 columnas con los encabezados reales, igual para los dos roles (ADR 0026); teléfonos E.164; sin archivadas, sin enlaces; con protección contra fórmulas (ADR 0028) | — |
 
 ### Configuración y auditoría
 

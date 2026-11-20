@@ -123,7 +123,7 @@ def create_app(
     if not panel.configurado:
         log.warning("login del panel no configurado: /api/v1/auth responderá 503")
     app.state.panel = panel
-    app.state.admin = crear_app_admin(panel, settings.max_body_admin)
+    app.state.admin = crear_app_admin(panel, settings.max_body_admin, settings.max_import_file)
     app.mount("/api/v1/auth", crear_app_auth(panel, settings.max_body_admin))
     app.mount("/api/v1/admin", app.state.admin)
     app.mount("/admin", crear_panel_provisional())
