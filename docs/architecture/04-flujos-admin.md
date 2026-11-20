@@ -26,7 +26,7 @@ sequenceDiagram
   Note over A: Hasta esa fecha, lookup devuelve estado abierta para INV-014
 ```
 
-Con rol planner, la API responde `403`. Tras el congelamiento, `409 rsvp_congelado` (ADR 0016).
+Con rol planner, la API responde `403`. Después del congelamiento de los invitados (6 feb 2027 00:00), `409 rsvp_congelado`; la ventana real va del 31 de enero al 5 de febrero de 2027 (ADR 0027).
 
 ## 4.2 El admin crea una invitación, genera su enlace y lo envía por WhatsApp
 
@@ -135,7 +135,7 @@ sequenceDiagram
   alt Rol novios
     A->>A: 19 columnas, Código INV, 14 de la planner, Mensaje, Grupo, Rol, Alergias
   else Rol planner
-    A->>A: 18 columnas, sin Mensaje del invitado
+    A->>A: Las mismas 19 columnas (ADR 0026)
   end
   A->>A: Pases calculado, Asistirá Sí, No o vacío, neutraliza fórmulas
   A->>D: Evento de auditoría con quién y cuándo
@@ -170,4 +170,4 @@ sequenceDiagram
   Note over S,D: Luego se apagan la API y la DB (paso manual)
 ```
 
-Previo: congelamiento el 7 mar 2027 00:00; exportación y respaldo finales antes del 5 abr. El 5 abr hay que borrar la exportación final descargada o reemplazarla por una versión sin teléfonos ni alergias (ADR 0010).
+Previo: invitados congelados el 6 feb 2027 00:00 y la planner en solo lectura desde el 7 mar 2027 00:00; los novios pueden seguir editando, así que la exportación y el respaldo finales se hacen justo antes del 5 abr (ADR 0027). El 5 abr hay que borrar la exportación final descargada o reemplazarla por una versión sin teléfonos ni alergias (ADR 0010).

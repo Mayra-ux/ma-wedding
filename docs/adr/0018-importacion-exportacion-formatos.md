@@ -1,8 +1,10 @@
 # ADR 0018 — Importación y exportación: formatos y simplificación
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0026
 - **Fecha:** 2026-11-02
 - **Reemplaza parcialmente:** ADR 0009 (formatos de columnas, rol desde Comentario, marca de revisión, duplicados, columnas de la exportación de la planner)
+
+> Nota: el ADR 0026 decide que la planner exporte las mismas 19 columnas que los novios, incluido «Mensaje del invitado». El resto de este ADR sigue vigente.
 
 ## Contexto
 

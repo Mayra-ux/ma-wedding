@@ -8,7 +8,8 @@ Basado en ADR 0006, 0007, 0008/0013, 0009/0018, 0010, 0016, 0017 y 0019. Es un m
 erDiagram
   CONFIGURACION_EVENTO {
     datetime cierre_plazo "2027-01-31T00:00-06:00, configurable (ADR 0025)"
-    datetime congelamiento "2027-03-07T00:00-06:00, configurable"
+    datetime congelamiento "invitados: 2027-02-06T00:00-06:00, configurable"
+    datetime cierre_planner "2027-03-07T00:00-06:00, configurable"
     date fecha_borrado_1 "5 abr 2027"
     date fecha_borrado_2 "4 jun 2027"
   }
@@ -92,7 +93,8 @@ erDiagram
 
 | Entidad | Propósito | ADR |
 |---|---|---|
-| Configuración del evento | Registro único con cierre del plazo, congelamiento y fechas de borrado | 0010, 0016 |
+| Configuración del evento | Registro único con cierre del plazo, congelamiento de los invitados, cierre de la planner y fechas de borrado | 0010, 0016, 0027 |
+| Recordatorio enviado | Historial de recordatorios sin enlace (tipo, destino, actor y fecha; nunca el teléfono) | 0026 |
 | Invitación | Familia o grupo. Unidad de pases, enlace y respuesta. Lado y grupo como valores cerrados | 0006, 0017 |
 | Rol de invitación | Cero, uno o varios roles del catálogo por invitación | 0017 |
 | Versión de respuesta | Historial inmutable; la marcada como vigente es la respuesta actual | 0007 |
@@ -157,7 +159,7 @@ El esquema vive en `api/migrations/versions/0001_esquema_inicial.py` (SQL escrit
 | M11 (sug.) | `CHECK` de forma E.164 (`^\+[1-9][0-9]{7,14}$`); la normalización a +52 sigue en la API |
 | M14 (sug.) | `motivos_revision` solo acepta códigos cerrados: `pases_inconsistentes`, `lado_invalido`, `grupo_invalido`, `telefono_invalido`, `rol_invalido`; `requiere_revision = (hay motivos)` |
 | Alergias vacías (sug.) | Siempre `NULL`, nunca cadena vacía |
-| Fechas (sug.) | `cierre_plazo < congelamiento < fecha_borrado_1 < fecha_borrado_2`; configuración de un solo registro y **solo lectura** para el usuario de ejecución (cambiarla requiere una migración) |
+| Fechas (sug.) | `cierre_plazo < congelamiento ≤ cierre_planner`, `congelamiento` y `cierre_planner` antes de `fecha_borrado_1 < fecha_borrado_2` (migración 0005); configuración de un solo registro y **solo lectura** para el usuario de ejecución (cambiarla requiere una migración) |
 | A12 | La aplicación no borra invitaciones: guarda de SQLAlchemy (`app/guardas.py`) + test estático; solo la purga (I-10) puede, marcando la sesión |
 
 M8 y M13 siguen siendo de la API (I-3 e I-7).

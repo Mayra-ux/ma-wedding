@@ -7,7 +7,7 @@ import pytest
 from app.estado import MX, Estado, calcular_estado, fecha_limite_mostrar, iso_mx
 
 CIERRE = datetime(2027, 1, 31, 0, 0, tzinfo=MX)  # 2027-01-31T00:00-06:00 (ADR 0025)
-CONGELA = datetime(2027, 3, 7, 0, 0, tzinfo=MX)
+CONGELA = datetime(2027, 2, 6, 0, 0, tzinfo=MX)  # ADR 0027
 S = timedelta(seconds=1)
 
 

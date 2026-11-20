@@ -34,6 +34,20 @@ MENSAJES: dict[str, str] = {
     "sin_permiso": "No tienes permiso para esta acción.",
     "csrf_invalido": "La solicitud no es válida. Recarga el panel e inténtalo de nuevo.",
     "auth_no_configurada": "El inicio de sesión no está configurado.",
+    # API del panel (I-7)
+    "pases_menores_que_confirmados": "Ajusta la respuesta antes de bajar los pases.",
+    "ya_archivada": "La invitación ya está archivada.",
+    "no_archivada": "La invitación no está archivada.",
+    "archivada": "La invitación está archivada; restáurala primero.",
+    "plazo_aun_abierto": "El plazo sigue abierto; aún no se puede desbloquear.",
+    "mas_alla_del_congelamiento": "El desbloqueo no puede pasar del congelamiento.",
+    "rsvp_congelado": "La confirmación de los invitados ya está congelada.",
+    "sin_enlace_activo": "La invitación no tiene enlace activo.",
+    "requiere_revision": "Corrige la invitación antes de generar el enlace.",
+    "ya_tiene_enlace": "La invitación ya tiene un enlace activo.",
+    "recordatorios_cerrados": "El periodo de recordatorios terminó.",
+    "sin_telefono": "La invitación no tiene ese teléfono.",
+    "conflicto_codigo": "No se pudo asignar el código. Inténtalo de nuevo.",
 }
 
 

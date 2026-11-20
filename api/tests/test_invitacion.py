@@ -86,7 +86,6 @@ APROBADOS = [
     "no podrás acompañarnos",
     ". El periodo para modificarla terminó el ",
     "; si necesitas algún cambio, escríbenos al chat de WhatsApp.",
-    "Gracias por ser parte de nuestra leyenda. La confirmación de asistencia ya está cerrada.",
     "No pudimos guardar tu respuesta. Revisa tu conexión e inténtalo de nuevo.",
     "Hiciste varios intentos seguidos. Espera unos minutos e inténtalo de nuevo.",
     "No pudimos abrir tu invitación. Revisa tu conexión e inténtalo de nuevo.",
@@ -109,6 +108,17 @@ APROBADOS = [
 @pytest.mark.parametrize("texto", APROBADOS)
 def test_textos_aprobados_literales(texto: str) -> None:
     assert texto in HTML
+
+
+def test_congelada_usa_el_texto_de_cerrada() -> None:
+    """ADR 0027: «congelada» muestra el mismo texto que «cerrada» (invita a escribir al chat)."""
+    modulo = _modulo_rsvp()
+    assert "La confirmación de asistencia ya está cerrada." not in HTML
+    assert "T.congelada" not in modulo
+    assert not re.search(r"congelada\s*:\s*'", modulo)  # ya no hay texto propio de congelada
+    assert "} else { // cerrada o congelada" in modulo
+    # El agradecimiento del capítulo VIII (diseño aprobado) sigue intacto.
+    assert "<h2>Gracias por ser parte de nuestra leyenda</h2>" in HTML
 
 
 def test_longitudes_maximas_en_los_campos() -> None:

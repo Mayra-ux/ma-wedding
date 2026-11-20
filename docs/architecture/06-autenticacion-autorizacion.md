@@ -72,19 +72,21 @@ sequenceDiagram
 | Acción | Novios | Planner | Invitado (token) |
 |---|:-:|:-:|:-:|
 | Ver su invitación y responder | — | — | ✔ (la suya, solo si está abierta) |
-| Ver invitaciones, respuestas, historial y estadísticas | ✔ | ✔ **sin mensajes del invitado** | — |
+| Ver invitaciones, respuestas, mensajes, historial y estadísticas | ✔ | ✔ | — |
 | Ver alergias | ✔ | ✔ | — |
 | Crear, editar o archivar invitaciones | ✔ | — | — |
 | Importar | ✔ | — | — |
-| Exportar | ✔ (19 columnas) | ✔ (18, sin Mensaje) | — |
+| Exportar | ✔ (19 columnas) | ✔ (19 columnas, ADR 0026) | — |
 | Ver, generar, regenerar o revocar enlaces; marcar enviado | ✔ | — | — |
-| WhatsApp (principal y contacto alterno) | ✔ | — | — |
-| Desbloquear (solo tras el plazo, hasta el congelamiento) | ✔ | — | — |
-| Registrar respuesta en nombre del invitado (hasta el congelamiento) | ✔ | — | — |
-| Cambiar la configuración (fechas) | ✔ | — | — |
-| Ver la auditoría | ✔ | — | — |
+| Ver indicadores del enlace (activo, enviado y cuándo) | ✔ | ✔ | — |
+| WhatsApp con el enlace (principal y contacto alterno) | ✔ | — | — |
+| Recordatorio sin enlace por WhatsApp y marcarlo como enviado | ✔ | ✔ (hasta el 6 mar 2027 incluido) | — |
+| Desbloquear (solo tras el plazo, del 31 ene al 5 feb 2027) | ✔ | — | — |
+| Registrar respuesta en nombre del invitado (en cualquier momento) | ✔ | — | — |
+| Cambiar la configuración (fechas) | Por migración | — | — |
+| Ver la auditoría | ✔ | ✔ | — |
 
-Después del congelamiento, los novios también quedan en solo lectura + exportación (ADR 0016).
+Los novios no tienen congelamiento; la planner queda en solo lectura desde el 7 mar 2027 00:00 (ADR 0027). Ninguna respuesta entrega a la planner la URL del enlace ni el token (ADR 0026).
 
 ## 6.3 Protección transversal (ADR 0019)
 

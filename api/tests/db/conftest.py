@@ -24,7 +24,8 @@ MIGRATOR, MIGRATOR_PW = "ma_test_migrator", "migrator_solo_test"
 APP, APP_PW = "ma_test_app", "app_solo_test"
 
 DATA_TABLES = (
-    "invitacion, invitacion_rol, version_respuesta, enlace, sesion_admin, evento_auditoria"
+    "invitacion, invitacion_rol, version_respuesta, enlace, sesion_admin, evento_auditoria, "
+    "recordatorio_enviado"
 )
 
 

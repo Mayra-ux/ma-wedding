@@ -46,6 +46,9 @@ def test_ejecucion_no_puede_ddl(app_conn: Connection, ddl: str) -> None:
         "UPDATE sesion_admin SET expira_en = now() + interval '1 year'",
         "UPDATE sesion_admin SET secreto_csrf = decode('00', 'hex')",
         "UPDATE sesion_admin SET hash_sesion = hash_sesion",
+        # recordatorio_enviado (I-7): historial; se inserta y se lee, nunca se modifica.
+        "UPDATE recordatorio_enviado SET tipo = 'evento'",
+        "UPDATE configuracion_evento SET cierre_planner = now()",
         "SELECT * FROM alembic_version",
     ],
 )
@@ -65,6 +68,14 @@ def test_ejecucion_si_puede_operar_datos(app_conn: Connection) -> None:
         text("INSERT INTO evento_auditoria (actor, accion) VALUES ('a@ejemplo.invalid', 'prueba')")
     )
     app_conn.execute(text("UPDATE sesion_admin SET ultima_actividad = now()"))  # I-6
+    app_conn.execute(  # I-7
+        text(
+            "INSERT INTO recordatorio_enviado (invitacion_id, tipo, destino, actor) "
+            "VALUES (:i, 'confirmar', 'principal', 'p@ejemplo.invalid')"
+        ),
+        {"i": inv},
+    )
+    app_conn.execute(text("SELECT * FROM recordatorio_enviado")).all()
 
 
 def test_atributos_de_los_roles(migrator_engine: Engine) -> None:

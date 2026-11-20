@@ -56,6 +56,7 @@ from app.sesiones_panel import (
     firmar_estado,
     leer_estado,
 )
+from app.tokens import Llaves
 
 log = logging.getLogger("app.auth")
 
@@ -79,6 +80,8 @@ class ContextoPanel:
     reloj: Reloj
     panel_origin: str
     limite_ip: LimitadorVentana
+    llaves_tokens: Llaves | None = None  # enlaces de invitación (I-7)
+    invitation_origin: str = "http://localhost:8080"
 
     @property
     def redirect_uri(self) -> str:
@@ -179,13 +182,22 @@ UsuarioActual = Annotated[Usuario, Depends(usuario_actual)]
 
 
 def guardia_admin(request: Request) -> Usuario:
-    """Dependencia global de /api/v1/admin: sesión, CSRF en escrituras y rol."""
+    """Dependencia global de /api/v1/admin: sesión, CSRF en escrituras y rol (ADR 0026).
+
+    - Lectura: novios y planner, salvo rutas `solo_novios` (el enlace en claro).
+    - Escritura: solo novios, salvo rutas `permite_planner` (marcar un recordatorio).
+    Los novios no tienen congelamiento (ADR 0027); el cierre de la planner lo aplica su ruta.
+    """
     usuario = usuario_actual(request)
-    if request.method not in METODOS_LECTURA:
+    ruta = request.scope.get("route")
+    extra = getattr(ruta, "openapi_extra", None) or {}
+    es_novios = usuario.rol is Rol.ADMIN
+    if request.method in METODOS_LECTURA:
+        if extra.get("solo_novios") and not es_novios:
+            raise ErrorAPI(403, "sin_permiso")
+    else:
         exigir_csrf(request, usuario)
-        ruta = request.scope.get("route")
-        extra = getattr(ruta, "openapi_extra", None) or {}
-        if usuario.rol is not Rol.ADMIN and not extra.get("permite_planner"):
+        if not es_novios and not extra.get("permite_planner"):
             raise ErrorAPI(403, "sin_permiso")
     return usuario
 
@@ -310,8 +322,11 @@ def _iguales(a: str, b: str) -> bool:
 
 
 def crear_app_admin(ctx: ContextoPanel, max_cuerpo: int) -> FastAPI:
-    """API del panel. En I-6 no tiene rutas propias; I-7 las agrega aquí y heredan la guardia."""
+    """API del panel (I-7). Todas sus rutas heredan la guardia."""
+    from app.panel_rutas import registrar_rutas
+
     app = _sub_app(ctx, dependencies=[Depends(guardia_admin)])
+    registrar_rutas(app)
     _endurecer(app, ctx, max_cuerpo)
     return app
 

@@ -1,8 +1,10 @@
 # ADR 0017 — Reglas de invitación, catálogos y permisos del panel
 
-- **Estado:** Aceptado
+- **Estado:** Reemplazado parcialmente por ADR 0026 y ADR 0027
 - **Fecha:** 2026-11-02
 - **Reemplaza parcialmente:** ADR 0006 (rol único, borrado de invitaciones, catálogos y longitudes) y ADR 0005 (alcance de lectura de la planner)
+
+> Nota: el ADR 0026 cambia los permisos de la planner (ve mensajes y auditoría, y marca recordatorios sin enlace; sigue sin ver enlaces). El ADR 0027 permite a los novios restaurar una invitación archivada en cualquier momento. El resto de este ADR sigue vigente.
 
 ## Contexto
 

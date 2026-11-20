@@ -117,6 +117,8 @@ def create_app(
         reloj=reloj,
         panel_origin=settings.panel_origin,
         limite_ip=LimitadorVentana(settings.rate_limit_ip_per_hour),
+        llaves_tokens=ctx.llaves,
+        invitation_origin=settings.invitation_origin,
     )
     if not panel.configurado:
         log.warning("login del panel no configurado: /api/v1/auth responderá 503")

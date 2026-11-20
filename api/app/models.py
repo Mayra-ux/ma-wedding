@@ -32,7 +32,8 @@ class ConfiguracionEvento(Base):
 
     id: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
     cierre_plazo: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    congelamiento: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    congelamiento: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # invitados
+    cierre_planner: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # ADR 0027
     fecha_borrado_1: Mapped[date] = mapped_column(Date)
     fecha_borrado_2: Mapped[date] = mapped_column(Date)
 
@@ -112,6 +113,19 @@ class SesionAdmin(Base):
     ultima_actividad: Mapped[datetime] = mapped_column(  # cierre por inactividad (I-6)
         DateTime(timezone=True), server_default=NOW
     )
+
+
+class RecordatorioEnviado(Base):
+    """Recordatorio sin enlace enviado por WhatsApp (ADR 0026). Nunca guarda el teléfono."""
+
+    __tablename__ = "recordatorio_enviado"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    invitacion_id: Mapped[int] = mapped_column(ForeignKey("invitacion.id"))
+    tipo: Mapped[str] = mapped_column(Text)  # confirmar | evento
+    destino: Mapped[str] = mapped_column(Text)  # principal | alterno
+    actor: Mapped[str] = mapped_column(String(254))
+    enviado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=NOW)
 
 
 class EventoAuditoria(Base):
