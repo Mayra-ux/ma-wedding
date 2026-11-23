@@ -14,7 +14,11 @@ export default function Login({ motivo }) {
   return (
     <main className="login">
       <div className="login-tarjeta">
-        <img src={`${import.meta.env.BASE_URL}mono.webp`} alt="Monograma M&A" width="96" height="96" />
+        {/* Monograma tal cual (proporción original 1400×655) con el mismo brillo de la invitación */}
+        <div className="login-mono">
+          <img src={`${import.meta.env.BASE_URL}mono.webp`} alt="Monograma M&A" width="1400" height="655" />
+          <span className="login-brillo" aria-hidden="true" />
+        </div>
         <h1 ref={ref} tabIndex={-1}>
           Panel de la boda
         </h1>
@@ -27,7 +31,7 @@ export default function Login({ motivo }) {
         <a className="boton boton-grande" href="/api/v1/auth/google/login">
           Entrar con Google
         </a>
-        <p className="nota">Solo para los novios y la planner.</p>
+        <p className="nota">Acceso de administrador</p>
       </div>
     </main>
   )

@@ -900,11 +900,43 @@ input[type='radio'] {
   padding: 2rem 1.5rem;
   text-align: center;
 }
-.login-tarjeta img {
-  display: block;
+/* Monograma: sin deformar (alto automático) y con el brillo de la portada de la invitación
+   (franja de luz enmascarada con la forma del monograma, cada 6 s). */
+.login-mono {
+  position: relative;
+  width: min(15rem, 80%);
   margin: 0 auto 1rem;
-  width: 96px;
-  height: 96px;
+}
+.login-mono img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 18px rgb(13 79 61 / 18%));
+}
+.login-brillo {
+  position: absolute;
+  inset: 0;
+  -webkit-mask: url(/mono.webp) center / 100% 100% no-repeat;
+  mask: url(/mono.webp) center / 100% 100% no-repeat;
+  background: linear-gradient(105deg, transparent 42%, rgb(255 252 238 / 95%) 50%, transparent 58%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  animation: brillo 6s ease-in-out 1.6s infinite;
+  pointer-events: none;
+}
+@keyframes brillo {
+  0% {
+    background-position: 100% 0;
+  }
+  45%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-brillo {
+    animation: none;
+  }
 }
 .login-sub {
   font-style: italic;
