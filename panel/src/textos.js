@@ -116,6 +116,7 @@ export const ACCION_AUDITORIA = {
   recordatorio_enviado: 'Marcó un recordatorio como enviado',
   importacion: 'Importó un archivo',
   exportacion: 'Exportó la lista',
+  purga: 'Borrado programado de datos personales',
 }
 
 export const CAMPO = {

@@ -17,7 +17,7 @@ Datos aún pendientes (mostrar como placeholder entre corchetes, NUNCA inventar)
 2. Estado actual del proyecto
 Repo: Mayra-ux/ma-wedding. Ramas: main (publicada) y develop (trabajo; Mayra la sube al remoto).
 La ciudad (San Luis Potosí) se deduce de las coordenadas de Maps, pero no es un dato que los novios hayan pedido mostrar: no la agregues a la invitación.
-Despliegue PROVISIONAL en Vercel como sitio estático desde invitacion/ (Root Directory). Vercel no es el hosting definitivo.
+Despliegue PROVISIONAL en Vercel como sitio estático desde invitacion/ (Root Directory). Al desplegar, la invitación se queda en Vercel con el dominio propio (ADR 0030).
 Mayra se encarga de repositorio, ramas, merges y despliegues. Tú no haces push, no despliegas y no creas servicios ni bases de datos reales.
 
 Archivos (en invitacion/; api/ = backend FastAPI, panel/ = panel React + Vite, compose.yaml = entorno local; ADR 0020):
@@ -26,7 +26,7 @@ index.html — página completa (HTML + CSS + JS vanilla, sin framework ni build
 mono-espada.webp (monograma con espada: portada y cierre) · mono.webp (sin espada: nav, favicon).
 orn-meandro.svg, orn-espirales.svg, orn-anillo.svg — ornamentos tomados del paquete "Zelda TotK Vector Bundle" que entregaron los novios. Ese paquete deriva de arte del sitio oficial del juego (los SVG traen IDs como Zelda_Bundle). Se conservan por decisión de los novios (ver §3, "Ornamentos").
 og.jpg — vista previa para WhatsApp (1200×630).
-vercel.json — solo cleanUrls y caché. No usar funciones propietarias de Vercel.
+vercel.json — cleanUrls, caché de imágenes y encabezados de seguridad (nosniff, no-referrer, frame-ancestors 'none', HSTS) con noindex (ADR 0030). No usar funciones propietarias de Vercel. Llega a main junto con todo lo demás, cuando se cumplan las condiciones de salida.
 3. Diseño APROBADO — congelado
 
 El diseño visual está aprobado. No cambies colores, tipografías, composición, textos, animaciones, fondos, orden de secciones ni el monograma salvo petición explícita. Si una tarea de backend requiere tocar index.html, el cambio debe ser mínimo y quirúrgico (p. ej. reemplazar un placeholder por un dato que llega de la API) y debes listar exactamente qué líneas cambias antes de hacerlo.
@@ -77,7 +77,8 @@ Dominio: propio.
 Galería futura: solo fotos de la sesión de pareja.
 Posible a futuro (no ahora): Vite sin framework para la invitación, solo si hace falta optimizar las fotos o versionar los nombres de archivo. La página tendría que verse idéntica.
 
-Sin decidir: proveedor del PaaS y del Postgres administrado, compra del dominio.
+Decidido para el despliegue futuro (ADR 0030), TODAVÍA NO SE DESPLIEGA: Render (Ohio o Virginia) con Render Postgres 16; imagen construida a mano con GitHub Actions y publicada en GHCR; dominio .com en Cloudflare (invitación en Vercel con dominio propio, API y panel en api.<dominio>); respaldos cifrados con age en Cloudflare R2; alertas con Healthchecks gratuito; Google en modo Prueba. Guía: docs/operacion/guia-despliegue.md.
+Sin decidir: compra y nombre del dominio.
 
 Principios obligatorios:
 
@@ -107,7 +108,7 @@ Fuera de alcance (decisión de los novios): ningún envío automático de mensaj
 Retención: alergias y teléfonos se borran el 5 abr 2027 (también en el historial); el resto de datos personales el 4 jun 2027. Los respaldos vencen en esas mismas fechas. La exportación final descargada contiene teléfonos y alergias: ese archivo se borra o se reemplaza por una versión sin esas columnas el 5 abr 2027.
 
 Canal de contacto: el mismo chat de WhatsApp donde cada invitado recibió su invitación; no se publica ningún número (ADR 0024).
-Pendientes (no asumir): apellidos de los responsables en el aviso de privacidad, prueba de WhatsApp en iOS y Android, proveedor de hosting, dominio; hasta definirlo, no se envía ningún enlace real a invitados (ADR 0021). I-5 no se une a main hasta cumplir las condiciones del ADR 0024.
+Pendientes (no asumir): apellidos de los responsables en el aviso de privacidad, prueba de WhatsApp en iOS y Android, compra del dominio y despliegue; hasta tenerlos, no se envía ningún enlace real a invitados (ADR 0021). I-5 no se une a main hasta cumplir las condiciones del ADR 0024.
 
 5. Forma de trabajo
 Trabajamos por fases. No avances a la siguiente fase sin autorización explícita de Mayra.

@@ -56,7 +56,8 @@ def test_el_codigo_de_la_api_no_usa_la_conexion_de_migraciones() -> None:
         for p in (API / "app").glob("*.py")
         if "migration_database_url" in p.read_text(encoding="utf-8")
     )
-    assert usos == ["__main__.py", "config.py"]  # solo el comando `migrate` y su definición
+    # Solo los comandos `migrate` y `restaurar` (base NUEVA, I-10) y su definición.
+    assert usos == ["__main__.py", "config.py"]
 
 
 # --------------------------------------------------------------------------- catálogos

@@ -1,6 +1,16 @@
 {
   "cleanUrls": true,
   "headers": [
-    { "source": "/(.*)\\.(webp|svg|jpg)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }] }
+    { "source": "/(.*)\\.(webp|svg|jpg)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }] },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" },
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
   ]
 }

@@ -58,3 +58,4 @@ Registrar cada decisión relevante como un ADR (Architecture Decision Record) en
 | 0027 | Congelamiento por rol (reemplaza parcialmente al 0016, al 0017 y al 0024) |
 | 0028 | Importación del archivo real de la planner y exportación para scripts (complementa al 0009, al 0018 y al 0026) |
 | 0029 | Implementación del panel: CSP con Trusted Types, cierre por inactividad en el navegador y mensaje de WhatsApp con enlace (complementa al 0003, al 0015 y al 0026) |
+| 0030 | Operación y despliegue futuro: Render, dominio .com en Cloudflare, respaldos cifrados en R2, alertas con Healthchecks e IP del cliente detrás del proxy (complementa al 0004, al 0019 y al 0021) |

@@ -35,3 +35,9 @@ Estructura objetivo (se aplica en la fase I-1):
 - Separación clara entre lo público (la invitación) y el código del sistema.
 - Hasta que se cambie el Root Directory en Vercel, el despliegue provisional publicaría la raíz. **El cambio en Vercel debe hacerse junto con el merge de I-1.**
 - Las referencias de CLAUDE.md y del README a "la raíz" se actualizan en I-1.
+
+## Notas de implementación
+
+Precisiones técnicas que no cambian la decisión (ADR 0023).
+
+- **Operación (I-10, 23 nov 2026):** se agregan `ops/local/` (configuración del proxy nginx del modo «como producción» en local; no se publica), `docs/operacion/` (guías) y `.github/workflows/imagen.yml` (construcción manual de la imagen, ADR 0030). Ninguno queda dentro de `invitacion/`.
