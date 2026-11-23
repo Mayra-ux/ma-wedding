@@ -85,10 +85,38 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - Accesible por teclado; todo texto de usuario como texto; CSP de la API sin violaciones.
 - **Resultado (cerrada, 23 nov 2026; aprobado por Mayra):** todos los criterios se cumplen con 683 pruebas automáticas (634 de pytest y 49 de Vitest). Cuatro pruebas de punta a punta corren en Chrome con Google simulado y la API real: el flujo completo de los novios con el texto aprobado del mensaje con enlace, el uso solo con teclado, la planner antes y después de su cierre del 7 mar, y el cierre de sesión a los 30 minutos sin actividad. En todas hubo cero violaciones de CSP (incluido Trusted Types) y cero errores de JavaScript. La prueba de mutación detectó los 9 cambios introducidos a propósito, entre ellos HTML en el mensaje del invitado, escrituras sin CSRF, el enlace visible para la planner, una URL de WhatsApp sin validar, la CSP sin Trusted Types y un script en línea. gitleaks no encontró secretos. Mayra aprobó las capturas de las 15 pantallas en 390 y 1440 px. Novedades en la API: `GET /admin/invitations/{codigo}/link/whatsapp`, solo para novios, y `ahora` en `/admin/config`. El panel se compila dentro de un contenedor de Node fijado por digest y la imagen final no incluye Node. Decisiones: ADR 0029.
 
-## I-10 · Operación y cierre
-- Despliegue con la misma imagen en pruebas; Postgres sin acceso público (verificado desde fuera); TLS hacia la DB.
+## I-10 · Operación lista para desplegar (cambio de alcance, 23 nov 2026)
+Por decisión de Mayra, en I-10 **no se despliega**: la aplicación queda completa para probarla en local y todo el código de operación queda listo (ADR 0030). Los criterios que solo se cumplen al desplegar pasan a la fase siguiente.
+
+Criterios de I-10 (verificables en local):
 - Restauración probada: respaldo → DB nueva → `purge` → la API arranca y los conteos coinciden.
 - Simulación de fechas: con el reloj en el 6 feb los invitados ya no aceptan cambios y en el 7 mar la planner queda en solo lectura, mientras los novios siguen editando (ADR 0027); en el 5 abr no quedan teléfonos ni alergias (incluido el historial); en el 4 jun no quedan datos personales. Las ejecuciones son repetibles.
-- Un fallo forzado de `purge` o `backup` genera una alerta; cada ejecución deja un informe de conteos.
-- Los respaldos tienen vencimiento absoluto configurado.
+- Un fallo forzado de `purge` o `backup` genera una alerta (Healthchecks simulado); cada ejecución deja un informe de conteos. Sin URL configurada, las alertas están apagadas.
+- Los respaldos tienen vencimiento absoluto (prefijo por fecha y borrado de lo vencido), van cifrados con age y se prueban contra una carpeta local y un destino S3 compatible de prueba, nunca contra R2 real.
+- La IP del cliente detrás del proxy no se puede falsificar: 301 peticiones con `X-Forwarded-For` falso → 429.
+- La imagen incluye `pg_dump` 16 y `age`; el flujo `imagen.yml` existe (manual, acciones fijadas por SHA) y no se ejecuta.
+- `vercel.json` con encabezados de seguridad y `noindex`, sin romper la invitación (Chrome, 390 y 1440 px, sin violaciones de CSP).
+- Modo «como producción» en local (compose, perfil `prod-local`): invitación, proxy, API con panel y DB propia; recorrido real importar → enlace → abrir → confirmar → verlo en el panel.
+- Guía de operación para el despliegue futuro (`docs/operacion/guia-despliegue.md`).
+- **Resultado (cerrada, 23 nov 2026; aprobado por Mayra):** todos los criterios locales se cumplen, con 752 pruebas automáticas (703 de pytest y 49 de Vitest), y gitleaks no encontró secretos.
+  - **Fechas y purga:** la simulación del 6 feb, 7 mar, 5 abr y 4 jun da resultados idénticos en dos corridas sobre bases nuevas. La purga corre con el usuario de ejecución, es idempotente y revierte todo si falla.
+  - **Modo «como producción»:** la imagen trae `pg_dump` 16 (PGDG, llave verificada por huella) y `age`, sin curl, gpg ni Node. Con datos ficticios se recorrió importar → enlace → abrir → confirmar → verlo en el panel, con cero violaciones de CSP y cero errores de JavaScript en los dos orígenes.
+  - **Respaldo y restauración:** el respaldo cifrado con `age` real se restauró, desde una carpeta y desde un S3 de prueba (versitygw), en una base nueva; `verificar-restauracion` dio «conteos coinciden» y la API arrancó sobre la base restaurada.
+  - **Firma S3:** pasa los 4 ejemplos oficiales de AWS, y el servidor real rechaza un secreto equivocado.
+  - **IP del cliente:** 301 peticiones con `X-Forwarded-For` falso dan 429, en pruebas y en vivo contra nginx.
+  - **Alertas:** los fallos forzados de `purge` y `backup` generan alerta con un Healthchecks simulado.
+  - **Invitación:** `vercel.json`, con encabezados de seguridad y `noindex`, no rompe la invitación (Chrome, 390 y 1440 px); llega a `main` con todo lo demás.
+  - **Imagen:** el flujo `imagen.yml` está creado (manual, acciones fijadas por SHA) y no se ejecutó.
+  - **Hallazgos corregidos:**
+    - el usuario de ejecución no podía hacer `pg_dump`: la migración 0006 le da solo lectura de `alembic_version` y de las secuencias;
+    - la purga no era idempotente después del 4 jun;
+    - uvicorn con `FORWARDED_ALLOW_IPS="*"` permitía falsificar la IP;
+    - los comandos de restauración de la guía fallaban en PowerShell 5.1: ahora usan `ops/local/restauracion.sh`.
+  - **Prueba intermitente (abierta):** en la verificación previa al cierre, 1 de 7 corridas completas tuvo una prueba fallida (702 de 703); las 6 siguientes pasaron completas. No se registró qué prueba fue. Desde entonces `tools/check.py` guarda la salida completa de cada corrida en `api/logs/check-AAAAMMDD-HHMMSS.log` (ignorado por git) y pytest nombra cada falla (`-rfE`). Si se repite, se documenta la prueba, el error y la causa.
+  - **Decisiones:** ADR 0030. Lo que solo se cumple al desplegar queda en la fase siguiente.
+
+## Despliegue (fase futura, cuando Mayra lo autorice)
+- Despliegue con la misma imagen en pruebas; Postgres sin acceso público (verificado desde fuera); TLS hacia la DB.
+- Respaldo real a R2 con la regla de ciclo de vida verificada; alerta real de Healthchecks recibida.
+- La prueba de 301 → 429 repetida contra el proxy real del proveedor (`TRUSTED_PROXY_HOPS`).
 - Checklist de salida a producción firmado por Mayra: aviso de privacidad (con apellidos), textos de I-5, dominio, prueba de WhatsApp en iOS y Android, `api-base` y CSP de la invitación apuntando a la API desplegada, Root Directory de Vercel; solo entonces I-5 se une a `main` (ADR 0024).

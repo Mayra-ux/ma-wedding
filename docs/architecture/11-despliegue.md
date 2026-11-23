@@ -1,6 +1,6 @@
 # 11. Despliegue portable
 
-Basado en ADR 0002, 0004, 0015, 0019 y 0020. No se elige proveedor: está pendiente.
+Basado en ADR 0002, 0004, 0015, 0019, 0020 y 0030. **Proveedor decidido para cuando se despliegue: Render** (ADR 0030); en I-10 no se despliega. Paso a paso: [guía de operación](../operacion/guia-despliegue.md).
 
 ## Estructura del repositorio (ADR 0020)
 
@@ -9,7 +9,9 @@ Basado en ADR 0002, 0004, 0015, 0019 y 0020. No se elige proveedor: está pendie
 | `invitacion/` | `index.html`, imágenes, SVG, `vercel.json`, movidos **sin cambiar un byte** en I-1 | Hosting estático (Root Directory = `invitacion/`) |
 | `api/` | Backend FastAPI | Imagen Docker |
 | `panel/` | Código fuente React + Vite | Su build va **dentro** de la imagen Docker (ADR 0015) |
-| `docs/` | ADRs y arquitectura | No se publica |
+| `docs/` | ADRs, arquitectura y guía de operación | No se publica |
+| `ops/local/` | Configuración del proxy del modo «como producción» en local (I-10) | No se publica |
+| `.github/workflows/` | `imagen.yml`: construye y publica la imagen en GHCR, solo a mano (I-10) | GitHub Actions |
 
 Cambiar el Root Directory en Vercel lo hace Mayra, junto con el merge de I-1.
 
@@ -19,9 +21,12 @@ Cambiar el Root Directory en Vercel lo hace Mayra, junto con el merge de I-1.
 - **Comandos de la misma imagen:**
   - `serve`: API + panel en `/admin/`.
   - `migrate`: con el usuario de migraciones.
-  - `purge`: tarea de borrado diaria.
-  - `backup`: si el proveedor no ofrece respaldos que cumplan el doc 10.
+  - `purge`: tarea de borrado diaria (I-10).
+  - `backup`: respaldo cifrado diario (I-10; doc 10).
+  - `listar-respaldos`, `restaurar` y `verificar-restauracion`: restauración probada (I-10; doc 10).
   - `rotate-keys`: rotación de llaves de tokens (ADR 0019).
+- **Herramientas en la imagen (I-10):** `pg_dump`/`pg_restore` 16 (PGDG, llave verificada por huella) y `age` (Debian). Sin compiladores ni curl en la imagen final.
+- **Dónde se construye:** Render no admite el contexto adicional `panel-src`, así que la imagen la construye GitHub Actions (`.github/workflows/imagen.yml`, solo manual, acciones fijadas por SHA, procedencia firmada) y la publica en GHCR; Render la descarga fijada por digest (ADR 0030).
 - **Endurecimiento (ADR 0019):**
   - Imagen base fijada por digest.
   - Usuario no root.
@@ -50,11 +55,14 @@ Solo los **nombres** y su propósito. Los valores reales nunca van al repositori
 | `SESION_INACTIVIDAD_HORAS` / `SESION_MAXIMA_DIAS` | Cierre de la sesión del panel: 8 h sin actividad / 7 días como máximo | — |
 | `INVITATION_ORIGIN` | Origen de la invitación: CORS de la API pública y base del enlace `/#t=`. Solo esquema y host; `https` salvo `localhost`/`127.0.0.1` | — |
 | `RATE_LIMIT_TOKEN_LOOKUP_PER_HOUR` / `RATE_LIMIT_TOKEN_RESPONSE_PER_HOUR` / `RATE_LIMIT_IP_PER_HOUR` | Umbrales (ADR 0019): 20 / 10 / 300 por hora | — |
-| `FORWARDED_ALLOW_IPS` | Proxies de confianza para `X-Forwarded-For` (la lee uvicorn; la imagen usa `127.0.0.1`). Se ajusta al elegir proveedor: de ella depende la IP del rate limiting | — |
+| `TRUSTED_PROXY_HOPS` | Número de proxies delante de la API que agregan la IP del cliente a `X-Forwarded-For` (I-10, ADR 0030). La IP del cliente es la N-ésima **desde la derecha**; 0 = la IP de la conexión. Render: `1`. Reemplaza a `FORWARDED_ALLOW_IPS` (uvicorn corre con `--no-proxy-headers`) | — |
 | `SECURITY_HSTS` | `true` solo con el dominio definitivo (ADR 0019 y 0021); por defecto `false` | — |
 | `MAX_BODY_PUBLIC` / `MAX_BODY_ADMIN` / `MAX_IMPORT_FILE` | Tamaños máximos (público: 4096 bytes; panel: 65536) | — |
-| `BACKUP_*` | Destino y llave de cifrado de respaldos (si los hace la imagen) | ✔ |
-| `ALERT_*` | Canal de alertas de `purge` y `backup` (pendiente) | ✔ |
+| `BACKUP_DIR` | Destino de respaldos en una carpeta (local) **o** bien `BACKUP_S3_*` | — |
+| `BACKUP_S3_ENDPOINT` / `BACKUP_S3_BUCKET` / `BACKUP_S3_REGION` | Almacenamiento S3 compatible (R2: `https://<cuenta>.r2.cloudflarestorage.com`, región `auto`) | — |
+| `BACKUP_S3_ACCESS_KEY_ID` / `BACKUP_S3_SECRET_ACCESS_KEY` | Token de R2 con acceso **solo a ese bucket** | ✔ |
+| `BACKUP_AGE_RECIPIENT` | Llave **pública** de age (`age1…`); la privada nunca va al proveedor | — |
+| `ALERT_PING_URL_BACKUP` / `ALERT_PING_URL_PURGE` | URL de ping de Healthchecks por tarea; vacía = alertas apagadas | ✔ |
 | `LOG_LEVEL` | Nivel de registro | — |
 
 `PANEL_ORIGIN` volvió en I-6 (decisión aprobada; ADR 0005, notas de implementación) para la URI de redirección de Google y la verificación de `Origin`; el panel sigue en el mismo origen que la API. Ya no hay `PUBLIC_INVITATION_URL` (se deriva de `INVITATION_ORIGIN`). Las fechas (cierre, congelamiento, borrado) viven en la configuración del evento en la DB.
@@ -69,7 +77,7 @@ El enlace es `INVITATION_ORIGIN + "/#t=" + token` y se arma al consultarlo (se d
 |---|---|
 | Local | `http://localhost:8080` |
 | Pruebas en la nube | `https://ma-wedding-six.vercel.app` |
-| Producción | Dominio definitivo (**pendiente**) |
+| Producción | `https://<dominio>` (`.com` en Cloudflare, invitación en Vercel; ADR 0030). La compra está pendiente |
 
 > **Regla (ADR 0021): NINGÚN enlace real se envía a invitados hasta definir el dominio definitivo.** El dominio queda escrito dentro de cada enlace enviado por WhatsApp; si después cambia, los enlaces ya enviados seguirían apuntando al dominio anterior. Con el dominio de pruebas solo se usan invitaciones ficticias.
 
@@ -87,8 +95,8 @@ El enlace es `INVITATION_ORIGIN + "/#t=" + token` y se arma al consultarlo (se d
 
 ## Base de datos
 
-- **PostgreSQL privado**, sin acceso público. Se reevalúa solo al elegir proveedor (ADR 0004, 0019).
-- **Dos usuarios:** migraciones (dueño del esquema) y ejecución (solo datos). `purge` usa el de ejecución.
+- **PostgreSQL 16 privado**, sin acceso público (en Render: lista de IPs vacía; conexión interna con `sslmode=require`). ADR 0004, 0019 y 0030.
+- **Dos usuarios:** migraciones (dueño del esquema) y ejecución (solo datos, más lectura de `alembic_version` y las secuencias para `pg_dump`, migración 0006). `purge` y `backup` usan el de ejecución; `restaurar` usa el de migraciones de la base **nueva**.
 - **TLS obligatorio**, con verificación de certificado si el proveedor lo permite.
 - Mover de proveedor: volcado lógico + restauración (doc 10) + `migrate`.
 - **Crear los usuarios en el proveedor** (equivale a `db/init/01-roles.sh` del entorno local; contraseñas largas y aleatorias en el gestor de secretos, nunca en el repo):
@@ -103,7 +111,9 @@ El enlace es `INVITATION_ORIGIN + "/#t=" + token` y se arma al consultarlo (se d
 
   Después, `migrate` (con `MIGRATION_DATABASE_URL` y `DB_RUNTIME_ROLE=ma_app`) crea el esquema y otorga a `ma_app` solo permisos de datos (doc 02, «Usuarios de la DB»).
 
-## Comparación de opciones de hosting
+## Comparación de opciones de hosting (antes de elegir)
+
+La elección quedó en el ADR 0030 (Render). Se conserva la comparación general:
 
 | Criterio | VPS | PaaS de contenedores (**ADR 0004**) | Contenedores serverless |
 |---|---|---|---|

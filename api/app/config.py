@@ -105,6 +105,59 @@ class Settings(BaseSettings):
     max_body_admin: int = Field(65536, ge=1024)  # bytes
     max_import_file: int = Field(2 * 1024 * 1024, ge=1024)  # bytes (I-8, ADR 0019)
 
+    # --- Operación (I-10; ADR 0030) ---
+    # Proxies delante de la API que AGREGAN la IP del cliente a X-Forwarded-For. 0 = ninguno
+    # (se usa la IP de la conexión). Con N, la IP del cliente es la N-ésima desde la derecha:
+    # lo que el cliente escriba a la izquierda se ignora (app/proxy.py).
+    trusted_proxy_hops: int = Field(0, ge=0, le=5)
+    # Respaldo cifrado (doc 10): destino carpeta local O almacenamiento S3 compatible.
+    backup_dir: Path | None = None
+    backup_s3_endpoint: str | None = None  # p. ej. https://<cuenta>.r2.cloudflarestorage.com
+    backup_s3_bucket: str | None = None
+    backup_s3_region: str = "auto"
+    backup_s3_access_key_id: SecretStr | None = None
+    backup_s3_secret_access_key: SecretStr | None = None
+    # Llave PÚBLICA de age (age1…). La privada nunca está en el proveedor.
+    backup_age_recipient: str | None = None
+    # Healthchecks (ADR 0030): URL de ping por tarea. Sin URL, las alertas están apagadas.
+    alert_ping_url_backup: SecretStr | None = None
+    alert_ping_url_purge: SecretStr | None = None
+
+    @field_validator("backup_dir", mode="before")
+    @classmethod
+    def _dir_vacio(cls, value: object) -> object:
+        # BACKUP_DIR= (vacía) significa «sin carpeta», no la carpeta actual.
+        return None if isinstance(value, str) and not value.strip() else value
+
+    @field_validator("backup_age_recipient")
+    @classmethod
+    def _valid_recipient(cls, value: str | None) -> str | None:
+        if value and not re.fullmatch(r"age1[02-9ac-hj-np-z]{58}", value):
+            raise ValueError("BACKUP_AGE_RECIPIENT debe ser una llave pública de age (age1…)")
+        return value or None
+
+    @field_validator("backup_s3_endpoint")
+    @classmethod
+    def _valid_endpoint(cls, value: str | None) -> str | None:
+        if not value:
+            return None
+        partes = urlsplit(value)
+        host = partes.hostname or ""
+        # http solo hacia localhost o un servicio de compose (nombre sin puntos): pruebas.
+        if partes.scheme == "http" and (host in _HOSTS_LOCALES or "." not in host):
+            return validar_origen(value.replace("http://", "https://", 1)) and value
+        return validar_origen(value)
+
+    @field_validator("alert_ping_url_backup", "alert_ping_url_purge")
+    @classmethod
+    def _valid_ping(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is None or not value.get_secret_value().strip():
+            return None
+        partes = urlsplit(value.get_secret_value())
+        if partes.scheme != "https" and partes.hostname not in _HOSTS_LOCALES:
+            raise ValueError("la URL de alertas debe usar https (salvo localhost)")
+        return value
+
     @field_validator("db_runtime_role")
     @classmethod
     def _valid_role(cls, value: str) -> str:

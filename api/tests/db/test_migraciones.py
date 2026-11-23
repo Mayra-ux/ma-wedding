@@ -8,7 +8,7 @@ from app import migrar
 from app.models import Base
 from tests.db.conftest import APP, borrar_base, crear_base, urls
 
-HEAD = "0005"  # última migración
+HEAD = "0006"  # última migración
 
 TABLAS = {
     "configuracion_evento",

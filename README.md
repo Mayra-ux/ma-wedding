@@ -10,7 +10,9 @@ Arquitectura y decisiones: [docs/architecture/](docs/architecture/) y [docs/adr/
 | `invitacion/` | Sitio estático sin build: `index.html`, `mono-espada.webp`, `mono.webp`, `og.jpg`, `orn-*.svg`, `vercel.json` | Hosting estático (Root Directory = `invitacion`) |
 | `api/` | Backend FastAPI (Python 3.12, uv) con su `Dockerfile` | Imagen Docker |
 | `panel/` | Panel React + Vite (I-9); su build lo sirve la API en `/admin/` | Dentro de la imagen de la API |
-| `docs/` | ADRs y arquitectura | No se publica |
+| `docs/` | ADRs, arquitectura y guía de operación (`docs/operacion/`) | No se publica |
+| `ops/local/` | Proxy del modo «como producción» en local (I-10) | No se publica |
+| `.github/workflows/` | `imagen.yml`: construye y publica la imagen en GHCR, solo a mano (I-10) | GitHub Actions |
 
 En la raíz: `compose.yaml` (entorno local), `.env.example` (valores ficticios), `.pre-commit-config.yaml` (escaneo de secretos).
 
@@ -53,6 +55,8 @@ esas variables en `.env`, borra el volumen (`docker compose down -v`) para que e
 **Importación y exportación (I-8, ADR 0028):** los novios importan el Excel (.xlsx) o un CSV de la planner desde el panel, eligiendo la hoja y el lado por defecto; la vista previa no guarda nada y aplicar es todo o nada. **Regla de trabajo:** cada hoja de la planner se importa una sola vez (su archivo no trae Código INV, así que reimportarla duplicaría invitaciones); después, los cambios se hacen en el panel o reimportando el archivo exportado, que sí trae Código INV. La exportación (novios y planner) tiene 19 columnas, teléfonos E.164 y la opción `solo_confirmados`, útil para el script del mensaje del día de la boda. **Los archivos exportados contienen teléfonos y alergias:** guárdalos fuera del repo (`*.xlsx` y `*.csv` están ignorados) y bórralos o recórtalos el 5 abr 2027 (ADR 0010). Las pruebas usan solo archivos ficticios generados en `api/tests/planilla_ficticia.py`.
 
 **Panel (I-9, ADR 0029):** abre `http://localhost:8000/admin/` con la API levantada (`docker compose up -d --build`). Novios y planner entran con Google; la planner no ve enlaces ni botones de escritura salvo marcar recordatorios. No necesitas Node: `uv run python tools/check.py` compila y prueba el panel dentro del contenedor `node:24.22.3`, y `--e2e` corre la prueba de punta a punta con tu Chrome o Edge. El panel cierra la sesión a los 30 minutos sin uso. Detalle en `panel/README.md`.
+
+**Operación (I-10, ADR 0030):** todavía no se despliega. Comandos de la imagen: `purge` (borrado del 5 abr y del 4 jun 2027), `backup` (respaldo cifrado con age a una carpeta o a S3/R2), `listar-respaldos`, `restaurar` y `verificar-restauracion`. Para probar el recorrido real en tu computadora, con proxy, límites y una base propia, sigue `docs/operacion/modo-como-produccion.md`; el despliegue futuro está en `docs/operacion/guia-despliegue.md`.
 
 **API pública (I-4):** `POST /api/v1/public/invitation/lookup` y `POST /api/v1/public/invitation/response`, con el token en el cuerpo. Contrato y códigos de error: doc 07.
 

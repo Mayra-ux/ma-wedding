@@ -20,6 +20,15 @@ COPY --from=panel-src public/ ./public/
 COPY --from=panel-src src/ ./src/
 RUN npm run build
 
+# ---- Llave del repositorio PGDG (postgresql-client-16), verificada por huella ----
+FROM ${PYTHON_IMAGE} AS pgdg
+ARG PGDG_FINGERPRINT=B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /tmp/pgdg.asc \
+    && gpg --show-keys --with-colons /tmp/pgdg.asc | grep -q "^fpr:::::::::${PGDG_FINGERPRINT}:" \
+    && gpg --dearmor -o /pgdg.gpg /tmp/pgdg.asc
+
 # ---- Etapa de dependencias ----
 FROM ${PYTHON_IMAGE} AS builder
 COPY --from=uv /uv /usr/local/bin/uv
@@ -36,8 +45,20 @@ FROM ${PYTHON_IMAGE} AS runtime
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
+# Herramientas de operación (I-10, ADR 0030): pg_dump/pg_restore 16 (PGDG, la misma versión
+# mayor que el servidor) y age (Debian) para cifrar los respaldos. Sin compiladores ni curl.
+COPY --from=pgdg /pgdg.gpg /usr/share/keyrings/pgdg.gpg
+RUN . /etc/os-release \
+    && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" \
+        > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-16 age \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/lib/postgresql/16/bin/pg_dump --version && age --version
+ENV PATH="/usr/lib/postgresql/16/bin:${PATH}"
 RUN groupadd --system --gid 10001 app \
-    && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
+    && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app \
+    && mkdir -p /srv/respaldos && chown app:app /srv/respaldos
 WORKDIR /srv
 COPY --from=builder /opt/venv /opt/venv
 COPY app/ ./app/
@@ -48,12 +69,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"]
 STOPSIGNAL SIGTERM
-# IPs de proxies de confianza para X-Forwarded-For (uvicorn lee esta variable). Se ajusta al
-# elegir proveedor (I-10); la IP del cliente alimenta el rate limiting por IP (ADR 0019).
-ENV FORWARDED_ALLOW_IPS=127.0.0.1
 # Build del panel servido en /admin/ (app/panel.py).
 ENV PANEL_DIR=/srv/panel
 # Forma exec: uvicorn es PID 1 y recibe SIGTERM directamente; termina peticiones en curso.
+# --no-proxy-headers: la IP del cliente la resuelve app/proxy.py contando desde la derecha
+# (TRUSTED_PROXY_HOPS); uvicorn con FORWARDED_ALLOW_IPS="*" confiaría en la de la izquierda.
 # Sin access log de uvicorn (registra IP y consulta) ni encabezado `server`: el log propio
 # usa una lista cerrada de campos (app/seguridad.py).
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-graceful-shutdown", "20", "--proxy-headers", "--no-access-log", "--no-server-header"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-graceful-shutdown", "20", "--no-proxy-headers", "--no-access-log", "--no-server-header"]

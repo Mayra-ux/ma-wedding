@@ -83,5 +83,128 @@ services:
       timeout: 3s
       retries: 30
 
+  # ======================================================================================
+  # MODO «COMO PRODUCCIÓN» en local (I-10; guía en docs/operacion/). Perfil `prod-local`.
+  # Base, volumen y respaldos PROPIOS (no se mezclan con los datos ficticios de desarrollo).
+  # Sin HTTPS, pero con los límites de producción, encabezados de la invitación como en
+  # vercel.json y un proxy delante de la API que agrega X-Forwarded-For (TRUSTED_PROXY_HOPS=1).
+  # Antes: `docker compose stop api` (este perfil usa los puertos 8000 y 8080).
+  #   docker compose --profile prod-local --profile prod-local-tareas build api-prod   (una imagen)
+  #   docker compose --profile prod-local up -d proxy-prod   (arranca api-prod y db-prod)
+  #   docker compose --profile prod-local run --rm migrate-prod
+  #   docker compose --profile prod-local run --rm tareas-prod python -m app backup
+  #   docker compose --profile prod-local run --rm tareas-prod python -m app purge
+  #   Borrar SOLO la base y los respaldos de este modo (nunca `down -v`, que borra db-data):
+  #   docker compose --profile prod-local rm -sf proxy-prod api-prod db-prod
+  #   docker volume rm ma-wedding_db-prod-data ma-wedding_respaldos-prod
+  # ======================================================================================
+  proxy-prod:
+    image: nginx:1.30.5-alpine@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+    profiles: ["prod-local"]
+    ports:
+      # Invitación (como Vercel, con los encabezados de vercel.json). Si el 8080 está ocupado:
+      # $env:INVITACION_PUERTO = "8081" antes de levantar (el enlace usa el mismo puerto).
+      - "127.0.0.1:${INVITACION_PUERTO:-8080}:8080"
+      - "127.0.0.1:8000:8000"   # API + panel detrás del proxy (como Render)
+    volumes:
+      - ./ops/local/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./invitacion:/srv/invitacion:ro
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      api-prod:
+        condition: service_healthy
+
+  api-prod:
+    <<: *api-base
+    image: ma-wedding-prod-local   # una sola imagen para los servicios del modo
+    profiles: ["prod-local"]
+    environment: &prod-entorno
+      # Usuario de EJECUCIÓN de la base propia del modo (ADR 0019).
+      DATABASE_URL: postgresql+psycopg://${DB_RUNTIME_ROLE}:${DB_APP_PASSWORD}@db-prod:5432/${POSTGRES_DB}
+      PANEL_ORIGIN: http://localhost:8000
+      INVITATION_ORIGIN: http://localhost:${INVITACION_PUERTO:-8080}
+      TRUSTED_PROXY_HOPS: "1"          # el proxy de arriba agrega la IP del cliente
+      SECURITY_HSTS: "false"           # sin HTTPS en local
+      LOG_LEVEL: INFO
+      RATE_LIMIT_TOKEN_LOOKUP_PER_HOUR: "20"
+      RATE_LIMIT_TOKEN_RESPONSE_PER_HOUR: "10"
+      RATE_LIMIT_IP_PER_HOUR: "300"
+    # Sin `ports`: solo se llega por el proxy.
+    depends_on:
+      db-prod:
+        condition: service_healthy
+    stop_grace_period: 30s
+
+  tareas-prod:   # purge, backup, listar-respaldos, restaurar, verificar-restauracion (a mano)
+    <<: *api-base
+    image: ma-wedding-prod-local   # una sola imagen para los servicios del modo
+    profiles: ["prod-local-tareas"]   # solo con `run` (no arranca con `up`)
+    command: ["python", "-m", "app", "--help"]
+    environment:
+      <<: *prod-entorno
+      BACKUP_DIR: /srv/respaldos       # carpeta local (en Render: BACKUP_S3_* hacia R2)
+    volumes:
+      - respaldos-prod:/srv/respaldos
+      - ./ops/local:/ops:ro          # restauracion.sh (prueba de restauración)
+    depends_on:
+      db-prod:
+        condition: service_healthy
+
+  migrate-prod:
+    <<: *api-base
+    image: ma-wedding-prod-local   # una sola imagen para los servicios del modo
+    profiles: ["prod-local-tareas"]   # solo con `run` (no arranca con `up`)
+    command: ["python", "-m", "app", "migrate"]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://${DB_MIGRATOR_USER}:${DB_MIGRATOR_PASSWORD}@db-prod:5432/${POSTGRES_DB}
+    depends_on:
+      db-prod:
+        condition: service_healthy
+
+  # Destino S3 compatible DE PRUEBA (versitygw, Apache-2.0): sustituye a R2 en local. Datos en
+  # memoria y credenciales FICTICIAS, solo dentro de la red de compose (sin puertos publicados).
+  #   docker compose --profile prod-local-tareas up -d s3-prueba
+  s3-prueba:
+    image: versity/versitygw:v1.10.0@sha256:89cad13cc981986ee284cbafea4613f9533ce6fd5f37a2c96c4c4fb8adb3a316
+    profiles: ["prod-local-tareas"]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - mkdir -p /data/respaldos && exec /usr/local/bin/versitygw --access ficticia-local --secret ficticio-solo-local-s3 posix --nometa /data
+    tmpfs:
+      - /data
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  db-prod:
+    image: postgres:16
+    profiles: ["prod-local"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      DB_MIGRATOR_USER: ${DB_MIGRATOR_USER}
+      DB_MIGRATOR_PASSWORD: ${DB_MIGRATOR_PASSWORD}
+      DB_RUNTIME_ROLE: ${DB_RUNTIME_ROLE}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD}
+    # Sin `ports`: como en producción, la base no se publica.
+    volumes:
+      - db-prod-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./ops/local:/ops:ro          # restauracion.sh crear|borrar
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   db-data:
+  db-prod-data:
+  respaldos-prod:

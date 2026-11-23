@@ -49,7 +49,10 @@ def test_ejecucion_no_puede_ddl(app_conn: Connection, ddl: str) -> None:
         # recordatorio_enviado (I-7): historial; se inserta y se lee, nunca se modifica.
         "UPDATE recordatorio_enviado SET tipo = 'evento'",
         "UPDATE configuracion_evento SET cierre_planner = now()",
-        "SELECT * FROM alembic_version",
+        # alembic_version y secuencias: solo LECTURA para pg_dump (migración 0006, I-10).
+        "UPDATE alembic_version SET version_num = 'x'",
+        "DELETE FROM alembic_version",
+        "SELECT setval(pg_get_serial_sequence('invitacion', 'id'), 999)",
     ],
 )
 def test_ejecucion_sin_permisos_de_datos_fuera_de_lo_otorgado(

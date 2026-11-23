@@ -20,6 +20,7 @@ from app.estado import Reloj, reloj_sistema
 from app.google import GoogleReal, ProveedorGoogle
 from app.limites import LimitadorVentana
 from app.panel import ContextoPanel, crear_app_admin, crear_app_auth, crear_panel
+from app.proxy import IPDelCliente
 from app.publica import ContextoPublico, crear_app_publica
 from app.seguridad import SeguridadYAcceso
 from app.sesiones_panel import Duraciones, Listas, LlavesPanel, SecretoInvalido
@@ -130,6 +131,8 @@ def create_app(
 
     app.add_middleware(AtrapaErrores)
     app.add_middleware(SeguridadYAcceso, hsts=settings.security_hsts)
+    # El más externo: la IP real queda fijada antes de cualquier límite (ADR 0030).
+    app.add_middleware(IPDelCliente, saltos=settings.trusted_proxy_hops)
     return app
 
 
