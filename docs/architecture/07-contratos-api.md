@@ -71,7 +71,7 @@ Mismo origen que el panel; cookie de sesión. `X-CSRF-Token` en toda escritura. 
 
 Errores comunes: `401 no_autenticado` · `403 sin_permiso` · `403 csrf_invalido` · `404 no_encontrado` · `422 validacion` · `429`. Los novios no tienen congelamiento (ADR 0027): `409 rsvp_congelado` solo aparece al pedir un desbloqueo después del congelamiento de los invitados.
 
-Rol: **N** = novios, **P** = planner. La planner ve todo salvo los enlaces personales y su única escritura es marcar un recordatorio como enviado (ADR 0026). Ninguna respuesta incluye la URL del enlace ni el token, salvo `GET …/link` (solo N).
+Rol: **N** = novios, **P** = planner. La planner ve todo salvo los enlaces personales y su única escritura es marcar un recordatorio como enviado (ADR 0026). Ninguna respuesta incluye la URL del enlace ni el token, salvo `GET …/link` y `GET …/link/whatsapp` (solo N).
 
 ### Sesión
 
@@ -110,6 +110,7 @@ Los errores de `login` y `callback` son **páginas HTML** con textos fijos, porq
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
 | `GET /api/v1/admin/invitations/{codigo}/link` | N | — | Enlace `https://[dominio]/#t=<token>`, fecha de creación, estado de envío | `404 sin_enlace_activo` |
+| `GET /api/v1/admin/invitations/{codigo}/link/whatsapp` | N | `destino` (`principal` o `alterno`) | Mensaje con el enlace (texto aprobado, ADR 0029), `telefono` y `wa_url`; auditoría `enlace_consultado` con el destino, sin token | `404 sin_enlace_activo` · `409 sin_telefono` · `409 archivada` · `422 validacion` |
 | `POST /api/v1/admin/invitations/{codigo}/link` | N | — | 201 enlace nuevo | `409 requiere_revision` · `409 archivada` · `409 ya_tiene_enlace` |
 | `POST /api/v1/admin/invitations/{codigo}/link/regenerate` | N | — | 201 enlace nuevo; anterior revocado; marca de enviado reiniciada | `409 requiere_revision` · `409 archivada` |
 | `POST /api/v1/admin/invitations/{codigo}/link/revoke` | N | — | Sin enlace activo | `404 sin_enlace_activo` |
@@ -136,7 +137,7 @@ El botón de WhatsApp del panel arma el texto (plantilla de los novios, pendient
 
 | Recurso / método | Rol | Entrada | Salida | Errores propios |
 |---|---|---|---|---|
-| `GET /api/v1/admin/config` | N, P | — | Cierre del plazo, fecha límite a mostrar, congelamiento, cierre de la planner, fechas de borrado | — |
+| `GET /api/v1/admin/config` | N, P | — | Cierre del plazo, fecha límite a mostrar, congelamiento, cierre de la planner, fechas de borrado y `ahora` (hora del servidor, para que el panel calcule las fases; ADR 0029) | — |
 | `GET /api/v1/admin/audit` | N, P | — | Eventos (lista completa), sin datos de los invitados | — |
 
 Las fechas no se editan desde el panel: la configuración es de solo lectura para el usuario de ejecución y se cambia por migración (ADR 0026). `PATCH /config` no se implementa.

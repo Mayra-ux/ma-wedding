@@ -80,8 +80,9 @@ Definición aceptada por Mayra en la validación de la Fase 3 (2 nov 2026). Cada
 - La API sirve el panel en `/admin/` con enrutado por hash; funciona sin reglas de reescritura.
 - Flujos completos con datos ficticios: crear → enlace → WhatsApp (principal y alterno; marca enviado) → recordatorios → desbloquear → archivar → exportar.
 - Estadísticas y filtros calculados en el navegador con la lista completa.
-- La planner no ve mensajes, enlaces, WhatsApp ni auditoría.
+- La planner no ve enlaces ni tokens, ni botones de escritura salvo marcar recordatorios hasta su cierre. Ve mensajes, historial y auditoría, y usa WhatsApp solo para recordatorios sin enlace (ADR 0026; criterio corregido en I-9).
 - Accesible por teclado; todo texto de usuario como texto; CSP de la API sin violaciones.
+- **Resultado (cerrada, 23 nov 2026; aprobado por Mayra):** todos los criterios se cumplen con 683 pruebas automáticas (634 de pytest y 49 de Vitest). Cuatro pruebas de punta a punta corren en Chrome con Google simulado y la API real: el flujo completo de los novios con el texto aprobado del mensaje con enlace, el uso solo con teclado, la planner antes y después de su cierre del 7 mar, y el cierre de sesión a los 30 minutos sin actividad. En todas hubo cero violaciones de CSP (incluido Trusted Types) y cero errores de JavaScript. La prueba de mutación detectó los 9 cambios introducidos a propósito, entre ellos HTML en el mensaje del invitado, escrituras sin CSRF, el enlace visible para la planner, una URL de WhatsApp sin validar, la CSP sin Trusted Types y un script en línea. gitleaks no encontró secretos. Mayra aprobó las capturas de las 15 pantallas en 390 y 1440 px. Novedades en la API: `GET /admin/invitations/{codigo}/link/whatsapp`, solo para novios, y `ahora` en `/admin/config`. El panel se compila dentro de un contenedor de Node fijado por digest y la imagen final no incluye Node. Decisiones: ADR 0029.
 
 ## I-10 · Operación y cierre
 - Despliegue con la misma imagen en pruebas; Postgres sin acceso público (verificado desde fuera); TLS hacia la DB.

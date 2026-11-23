@@ -440,6 +440,44 @@ def test_recordatorio_por_fase(novios: Actor, planner: Actor, panel: Panel) -> N
     assert r.status_code == 409 and r.json()["error"]["code"] == "recordatorios_cerrados"
 
 
+def test_mensaje_de_whatsapp_con_enlace_solo_novios(
+    novios: Actor, planner: Actor, panel: Panel
+) -> None:
+    """Texto a) aprobado en I-9 (ADR 0029): lleva nombre, fecha límite y enlace."""
+    codigo = crear(
+        novios, nombre_mostrar="Familia Ficticia", telefono_principal=TEL,
+        contacto_alterno_tel="2025550199",
+    )  # fmt: skip
+    r = novios.get(f"/invitations/{codigo}/link/whatsapp")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "sin_enlace_activo"
+    token = enlace(novios, codigo)
+    r = novios.get(f"/invitations/{codigo}/link/whatsapp").json()
+    url = novios.get(f"/invitations/{codigo}/link").json()["url"]
+    assert r["texto"] == (
+        "Hola, Familia Ficticia: con mucha ilusión te invitamos a nuestra boda el sábado 6 de "
+        "marzo de 2027. Es peligroso ir solo… ¡acompáñanos! Aquí está tu invitación, donde "
+        "puedes confirmar tu asistencia a más tardar el sábado 30 de enero de 2027:\n"
+        f"{url}\nCon cariño, Mayra y Alejandro"
+    )
+    assert token in r["texto"]
+    assert r["telefono"] == MX52 + TEL
+    assert r["wa_url"].startswith(f"https://wa.me/52{TEL}?text=")
+    assert urllib.parse.unquote(r["wa_url"].split("text=")[1]) == r["texto"]
+    alterno = novios.get(f"/invitations/{codigo}/link/whatsapp", params={"destino": "alterno"})
+    assert alterno.json()["telefono"] == MX52 + "2025550199"
+    assert (
+        novios.get(f"/invitations/{codigo}/link/whatsapp", params={"destino": "otro"}).status_code
+        == 422
+    )
+    assert planner.get(f"/invitations/{codigo}/link/whatsapp").status_code == 403
+    eventos = [e for e in auditoria(panel) if e[1] == "enlace_consultado"]
+    assert eventos[-1][3] == {"destino": "alterno"}
+    assert all(token not in str(e) for e in auditoria(panel))
+    novios.escribir("POST", f"/invitations/{codigo}/archive")
+    r = novios.get(f"/invitations/{codigo}/link/whatsapp")
+    assert r.status_code == 409 and r.json()["error"]["code"] == "archivada"
+
+
 def test_recordatorio_sin_telefono_y_alterno(novios: Actor, planner: Actor) -> None:
     codigo = crear(novios, contacto_alterno_tel=TEL)
     r = planner.get(f"/invitations/{codigo}/reminder")
@@ -503,10 +541,10 @@ def _rutas_get_admin(app) -> list[tuple[str, bool]]:  # noqa: ANN001
 def test_lecturas_solo_novios_dan_403_a_la_planner(
     panel: Panel, planner: Actor, novios: Actor
 ) -> None:
-    codigo = crear(novios)
+    codigo = crear(novios, telefono_principal=TEL)
     enlace(novios, codigo)
     solo = [p for p, s in _rutas_get_admin(panel.app) if s]
-    assert solo == ["/invitations/{codigo}/link"]
+    assert solo == ["/invitations/{codigo}/link", "/invitations/{codigo}/link/whatsapp"]
     for ruta in solo:
         assert planner.get(ruta.replace("{codigo}", codigo)).status_code == 403
         assert novios.get(ruta.replace("{codigo}", codigo)).status_code == 200
@@ -544,8 +582,8 @@ def test_ninguna_respuesta_para_la_planner_contiene_token_ni_enlace(
             assert r.status_code == (403 if solo else 200), (url, r.status_code)
     me = planner.c.get("/api/v1/auth/me", headers=planner.sesion.cookie())
     respuestas.append(("/auth/me", me.status_code, me.text))
-    # 4 lecturas generales + 4 por invitación × 3 + /auth/me
-    assert len(respuestas) == 17
+    # 4 lecturas generales + 5 por invitación × 3 + /auth/me
+    assert len(respuestas) == 20
     for url, _status, cuerpo in respuestas:
         for token in tokens:
             assert token not in cuerpo, url
@@ -643,8 +681,9 @@ def test_auditoria_sin_datos_personales(novios: Actor, panel: Panel) -> None:
             "consulta_lista"} <= acciones  # fmt: skip
 
 
-def test_config(planner: Actor) -> None:
+def test_config(planner: Actor, panel: Panel) -> None:
     assert planner.get("/config").json() == {
+        "ahora": panel.reloj.ahora.astimezone(MX).isoformat(),
         "cierre_plazo": "2027-01-31T00:00:00-06:00",
         "fecha_limite_mostrar": "2027-01-30",
         "congelamiento": "2027-02-06T00:00:00-06:00",

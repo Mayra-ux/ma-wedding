@@ -508,16 +508,10 @@ def test_encabezados_de_seguridad(panel: Panel, ruta: str) -> None:
     if ruta in ("/admin/", CALLBACK):
         assert csp == (
             "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-            "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+            "font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; "
+            "base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; "
+            "trusted-types 'none'"
         )
-
-
-def test_panel_provisional_sin_scripts_en_linea(panel: Panel) -> None:
-    html = panel.cliente().get("/admin/").text
-    assert '<script src="panel.js" defer></script>' in html
-    assert "<script>" not in html and " style=" not in html and "onclick" not in html
-    js = panel.cliente().get("/admin/panel.js").text
-    assert "innerHTML" not in js and "textContent" in js
 
 
 def test_logs_sin_correo_codigo_token_ni_secretos(panel: Panel, caplog) -> None:  # noqa: ANN001

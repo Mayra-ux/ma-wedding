@@ -37,7 +37,7 @@ Los novios y la planner necesitan consultar desde el panel, nunca con acceso dir
   - **Hasta el sábado 30 de enero de 2027 incluido** (`ahora < cierre_plazo`), tipo `confirmar`: «Hola, te recordamos confirmar tu asistencia a la boda de Mayra y Alejandro a más tardar el [fecha], desde el enlace que te enviamos por WhatsApp. Si no lo encuentras, escríbenos y te lo reenviamos.» La fecha sale de la configuración.
   - **Del 31 de enero al 6 de marzo de 2027** (`cierre_plazo ≤ ahora < cierre_planner`), tipo `evento`: «Hola, te recordamos que la boda de Mayra y Alejandro es el sábado 6 de marzo de 2027: ceremonia a la 1:00 p. m. en el Templo San Francisco de Asís y recepción a las 4:00 p. m. en La Viña Jardín de Eventos. ¡Te esperamos!»
   - Después del cierre de la planner: `409 recordatorios_cerrados`.
-- Los textos son **provisionales** hasta su aprobación en I-9.
+- Los textos quedaron **aprobados tal cual** por los novios en I-9 (ADR 0029).
 - Marcar como enviado (`POST …/reminder/sent`, con `destino`) lo pueden hacer los novios y la planner. Se guarda en la tabla `recordatorio_enviado` (tipo, destino, actor y fecha; nunca el teléfono), aparte de la marca de envío del enlace, para no pisarla y para conservar varios recordatorios por invitación. El actor se borra el 4 jun 2027 con los demás correos de administradores (ADR 0010).
 
 ### Reglas confirmadas en I-7

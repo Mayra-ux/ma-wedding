@@ -9,7 +9,7 @@ Arquitectura y decisiones: [docs/architecture/](docs/architecture/) y [docs/adr/
 |---|---|---|
 | `invitacion/` | Sitio estático sin build: `index.html`, `mono-espada.webp`, `mono.webp`, `og.jpg`, `orn-*.svg`, `vercel.json` | Hosting estático (Root Directory = `invitacion`) |
 | `api/` | Backend FastAPI (Python 3.12, uv) con su `Dockerfile` | Imagen Docker |
-| `panel/` | Panel React + Vite (fase I-9); su build lo sirve la API | Dentro de la imagen de la API |
+| `panel/` | Panel React + Vite (I-9); su build lo sirve la API en `/admin/` | Dentro de la imagen de la API |
 | `docs/` | ADRs y arquitectura | No se publica |
 
 En la raíz: `compose.yaml` (entorno local), `.env.example` (valores ficticios), `.pre-commit-config.yaml` (escaneo de secretos).
@@ -51,6 +51,8 @@ esas variables en `.env`, borra el volumen (`docker compose down -v`) para que e
 **Panel y login con Google (I-6):** la API sirve una página provisional en http://localhost:8000/admin/ (Chrome o Edge). Necesita en `.env`: `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (cliente OAuth "Aplicación web" con la URI `http://localhost:8000/api/v1/auth/google/callback`), `ADMIN_EMAILS_NOVIOS`, `ADMIN_EMAILS_PLANNER` y `SESSION_SECRET` (lo escribe `generar-llaves --env-file ../.env` sin mostrarlo). Tras cambiar el `.env`: `docker compose up -d --force-recreate api`. Detalle en el doc 11.
 
 **Importación y exportación (I-8, ADR 0028):** los novios importan el Excel (.xlsx) o un CSV de la planner desde el panel, eligiendo la hoja y el lado por defecto; la vista previa no guarda nada y aplicar es todo o nada. **Regla de trabajo:** cada hoja de la planner se importa una sola vez (su archivo no trae Código INV, así que reimportarla duplicaría invitaciones); después, los cambios se hacen en el panel o reimportando el archivo exportado, que sí trae Código INV. La exportación (novios y planner) tiene 19 columnas, teléfonos E.164 y la opción `solo_confirmados`, útil para el script del mensaje del día de la boda. **Los archivos exportados contienen teléfonos y alergias:** guárdalos fuera del repo (`*.xlsx` y `*.csv` están ignorados) y bórralos o recórtalos el 5 abr 2027 (ADR 0010). Las pruebas usan solo archivos ficticios generados en `api/tests/planilla_ficticia.py`.
+
+**Panel (I-9, ADR 0029):** abre `http://localhost:8000/admin/` con la API levantada (`docker compose up -d --build`). Novios y planner entran con Google; la planner no ve enlaces ni botones de escritura salvo marcar recordatorios. No necesitas Node: `uv run python tools/check.py` compila y prueba el panel dentro del contenedor `node:24.22.3`, y `--e2e` corre la prueba de punta a punta con tu Chrome o Edge. El panel cierra la sesión a los 30 minutos sin uso. Detalle en `panel/README.md`.
 
 **API pública (I-4):** `POST /api/v1/public/invitation/lookup` y `POST /api/v1/public/invitation/response`, con el token en el cuerpo. Contrato y códigos de error: doc 07.
 

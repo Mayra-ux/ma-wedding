@@ -5,7 +5,8 @@ Todas pasan por `guardia_admin` (app/panel.py):
 - Escrituras: solo novios, salvo las marcadas `permite_planner` (marcar un recordatorio).
 - Los novios no tienen congelamiento (ADR 0027).
 
-Ninguna respuesta incluye el token ni la URL del enlace, salvo `GET …/link` (solo novios).
+Ninguna respuesta incluye el token ni la URL del enlace, salvo `GET …/link` y
+`GET …/link/whatsapp` (solo novios).
 """
 
 from fastapi import FastAPI, Request, Response
@@ -91,7 +92,8 @@ def registrar_rutas(app: FastAPI) -> None:  # noqa: C901 (lista plana de rutas)
     @app.get("/config")
     def config(request: Request) -> dict:
         with sesion(request) as s, s.begin():
-            return svc.config_publica(s)
+            # `ahora`: hora del servidor, para que el panel calcule las fases con el mismo reloj.
+            return svc.config_publica(s) | {"ahora": iso_mx(ctx(request).reloj())}
 
     @app.get("/invitations/{codigo}/reminder")
     def recordatorio(request: Request, codigo: str, destino: str = "principal") -> dict:
@@ -241,6 +243,22 @@ def registrar_rutas(app: FastAPI) -> None:  # noqa: C901 (lista plana de rutas)
             "enlace_enviado_en": enviado_en,
             "enlace_enviado_origen": origen,
         }
+
+    @app.get("/invitations/{codigo}/link/whatsapp", openapi_extra=SOLO_NOVIOS)
+    def whatsapp_enlace(request: Request, codigo: str, destino: str = "principal") -> dict:
+        if destino not in ("principal", "alterno"):
+            raise ErrorAPI(422, "validacion", {"destino": "fuera_de_catalogo"})
+        c = ctx(request)
+        with sesion(request) as s, s.begin():
+            inv = svc.buscar(s, codigo)
+            svc.no_archivada(inv)
+            try:
+                enlace = obtener_enlace(s, inv.id, llaves(request), c.invitation_origin)
+            except ErrorEnlace as exc:
+                raise ErrorAPI(exc.status, exc.codigo) from None
+            m = svc.mensaje_enlace(s, inv, destino, enlace.url)
+            svc.auditar(s, actor(request), "enlace_consultado", codigo, {"destino": destino})
+        return {"texto": m.texto, "telefono": m.telefono, "wa_url": m.wa_url}
 
     @app.post("/invitations/{codigo}/link", status_code=201)
     def generar(request: Request, codigo: str) -> dict:

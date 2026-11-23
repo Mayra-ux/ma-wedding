@@ -21,6 +21,7 @@ desktop.ini
 # Node
 node_modules/
 npm-debug.log*
+panel/dist/
 
 # Python
 __pycache__/

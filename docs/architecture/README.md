@@ -5,7 +5,7 @@ Diseño conceptual del sistema RSVP de la invitación (Fase 2). Describe **qué*
 ## Fuentes
 
 - [CLAUDE.md](../../CLAUDE.md): contexto permanente, diseño congelado y reglas del proyecto.
-- [ADRs 0001–0028](../adr/): decisiones aceptadas. Si este documento y un ADR difieren, **manda el ADR**, y la diferencia se resuelve con un ADR nuevo.
+- [ADRs 0001–0029](../adr/): decisiones aceptadas. Si este documento y un ADR difieren, **manda el ADR**, y la diferencia se resuelve con un ADR nuevo.
 
 ## Convenciones
 

@@ -23,3 +23,8 @@ El ADR 0003 definía el panel como una aplicación React + Vite con despliegue e
 - Un despliegue menos: la versión del panel siempre coincide con la de la API.
 - La imagen Docker requiere un paso de compilación del panel (Node solo en la etapa de build; la imagen final no lo incluye).
 - La invitación sigue en un hosting estático aparte (ADR 0002, ADR 0020).
+
+## Notas de implementación (I-9)
+
+- La API sirve el build desde `PANEL_DIR` (en la imagen, `/srv/panel`); sin build, `/admin/` responde una página 503 «Panel no disponible». Las rutas del panel van en el hash: cualquier otra ruta bajo `/admin/` responde 404, sin reescrituras.
+- La etapa de Node del `Dockerfile` usa `node:24.22.3-slim` fijado por digest y recibe el código como contexto adicional `panel-src`; la imagen final no incluye Node. Detalles de la CSP, la inactividad y los mensajes de WhatsApp: ADR 0029.
