@@ -1,0 +1,49 @@
+/* Páginas de error del inicio de sesión (las genera la API: app/panel.py, pagina_error). */
+@font-face {
+  font-family: 'Cinzel';
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/admin/fuentes/cinzel-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/admin/fuentes/cormorant-garamond-latin.woff2') format('woff2');
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: #f3ead7;
+  color: #1e2a24;
+  font-family: 'Cormorant Garamond', Garamond, serif;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+main {
+  width: min(28rem, 100%);
+  background: #fbf7ee;
+  border: 1px solid #e9dcc0;
+  border-top: 4px solid #b8964f;
+  border-radius: 6px;
+  padding: 1.5rem;
+}
+h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  color: #0a3a2e;
+  margin: 0 0 0.75rem;
+}
+a {
+  color: #0d4f3d;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
+a:focus-visible {
+  outline: 3px solid #0d4f3d;
+  outline-offset: 2px;
+}

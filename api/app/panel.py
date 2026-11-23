@@ -8,7 +8,7 @@ Sub-aplicaciones (mismo origen que el panel; sin CORS):
     · escritura sin X-CSRF-Token válido o con Origin distinto de PANEL_ORIGIN → 403 csrf_invalido
     · escritura de la planner → 403 sin_permiso, salvo rutas marcadas con
       openapi_extra={"permite_planner": True} (p. ej. la exportación, I-8)
-- /admin/: página provisional hasta el panel React de I-9.
+- /admin/: el build del panel React + Vite (I-9; ADR 0015, 0029), con la CSP del panel.
 
 Las páginas que ve el navegador al volver de Google (errores del callback) son HTML con
 textos fijos: nunca muestran el correo ni valores recibidos.
@@ -62,11 +62,15 @@ log = logging.getLogger("app.auth")
 
 RUTA_CALLBACK = "/api/v1/auth/google/callback"
 METODOS_LECTURA = frozenset({"GET", "HEAD", "OPTIONS"})
+# Trusted Types: el navegador bloquea cualquier escritura de HTML como texto (innerHTML, etc.);
+# el panel solo pinta texto con JSX (ADR 0029).
 PANEL_CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-    "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    "font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; "
+    "base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; "
+    "trusted-types 'none'"
 )
-DIR_PROVISIONAL = Path(__file__).resolve().parent / "panel_provisional"
+CACHE_INMUTABLE = "public, max-age=31536000, immutable"  # /admin/assets/: nombre con hash
 
 
 @dataclass
@@ -120,6 +124,10 @@ PAGINAS: dict[str, tuple[str, str]] = {
         "Google no respondió",
         "No se pudo contactar a Google. Inténtalo de nuevo en unos minutos.",
     ),
+    "panel_no_compilado": (
+        "Panel no disponible",
+        "Los archivos del panel no están en este servidor. Compílalo y vuelve a intentarlo.",
+    ),
     "auth_no_configurada": (
         "Inicio de sesión no disponible",
         "El inicio de sesión con Google aún no está configurado en este servidor.",
@@ -132,7 +140,7 @@ def pagina_error(status: int, codigo: str) -> HTMLResponse:
     html = (
         '<!doctype html><html lang="es"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        f'<title>{titulo} · Panel M&amp;A</title><link rel="stylesheet" href="/admin/panel.css">'
+        f'<title>{titulo} · Panel M&amp;A</title><link rel="stylesheet" href="/admin/errores.css">'
         f'</head><body><main data-codigo="{codigo}"><h1>{titulo}</h1><p>{texto}</p>'
         '<p><a href="/admin/">Volver al panel</a></p></main></body></html>'
     )
@@ -334,27 +342,39 @@ def crear_app_admin(ctx: ContextoPanel, max_cuerpo: int, max_importacion: int) -
     return app
 
 
-# --------------------------------------------------------------------------- página provisional
-class ConEncabezados:
-    """Middleware ASGI: fija encabezados (la CSP del panel) en las respuestas que envuelve."""
+# --------------------------------------------------------------------------- build del panel
+class PanelEstatico:
+    """Sirve el build de Vite en /admin/ (ADR 0015): enrutado por hash, sin reescrituras.
 
-    def __init__(self, app: ASGIApp, encabezados: dict[str, str]) -> None:
-        self.app = app
-        self.encabezados = [(k.encode(), v.encode()) for k, v in encabezados.items()]
+    - CSP del panel en toda respuesta.
+    - `index.html` y lo demás: `no-store` (base); `/assets/*` (nombre con hash): inmutable.
+    - Una ruta inexistente responde 404. Sin build: página 503 «Panel no disponible».
+    """
+
+    def __init__(self, directorio: Path | None) -> None:
+        self.estaticos = (
+            StaticFiles(directory=directorio, html=True)
+            if directorio is not None and (directorio / "index.html").is_file()
+            else None
+        )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        inmutable = scope.get("path", "").startswith(scope.get("root_path", "") + "/assets/")
+
         async def send_con(mensaje: Message) -> None:
             if mensaje["type"] == "http.response.start":
-                nombres = {k for k, _ in self.encabezados}
-                otros = [(k, v) for k, v in mensaje.get("headers", []) if k.lower() not in nombres]
-                mensaje = {**mensaje, "headers": [*otros, *self.encabezados]}
+                fijos = {b"content-security-policy": PANEL_CSP.encode()}
+                if inmutable and mensaje["status"] == 200:
+                    fijos[b"cache-control"] = CACHE_INMUTABLE.encode()
+                otros = [(k, v) for k, v in mensaje.get("headers", []) if k.lower() not in fijos]
+                mensaje = {**mensaje, "headers": [*otros, *fijos.items()]}
             await send(mensaje)
 
-        await self.app(scope, receive, send_con)
+        if self.estaticos is None:
+            await pagina_error(503, "panel_no_compilado")(scope, receive, send)
+            return
+        await self.estaticos(scope, receive, send_con)
 
 
-def crear_panel_provisional() -> ASGIApp:
-    return ConEncabezados(
-        StaticFiles(directory=DIR_PROVISIONAL, html=True),
-        {"content-security-policy": PANEL_CSP},
-    )
+def crear_panel(directorio: Path | None) -> ASGIApp:
+    return PanelEstatico(directorio)

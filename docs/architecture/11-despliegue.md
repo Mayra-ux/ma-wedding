@@ -15,7 +15,7 @@ Cambiar el Root Directory en Vercel lo hace Mayra, junto con el merge de I-1.
 
 ## Una sola imagen
 
-- **Build en varias etapas:** una etapa con Node compila el panel; la imagen final solo lleva Python, la API y los archivos estáticos del panel.
+- **Build en varias etapas:** una etapa con Node (`node:24.22.3-slim` fijado por digest) compila el panel; la imagen final solo lleva Python, la API y los archivos estáticos del panel en `/srv/panel` (`PANEL_DIR`). El código del panel entra como contexto adicional `panel-src` (compose: `additional_contexts`; a mano: `docker build --build-context panel-src=panel api`). ADR 0029.
 - **Comandos de la misma imagen:**
   - `serve`: API + panel en `/admin/`.
   - `migrate`: con el usuario de migraciones.
@@ -46,6 +46,7 @@ Solo los **nombres** y su propósito. Los valores reales nunca van al repositori
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Cliente OAuth de Google | — / ✔ |
 | `ADMIN_EMAILS_NOVIOS` / `ADMIN_EMAILS_PLANNER` | Listas de correos por rol, separadas por comas; un correo no puede estar en ambas | ✔ (no exponer) |
 | `PANEL_ORIGIN` | Origen público de la API y del panel (I-6): base de la URI de redirección de Google (`<PANEL_ORIGIN>/api/v1/auth/google/callback`) y valor esperado de `Origin` en las escrituras. `https` salvo localhost; por defecto `http://localhost:8000` | — |
+| `PANEL_DIR` | Carpeta del build del panel (I-9). La imagen la fija en `/srv/panel`; sin build, `/admin/` responde 503 | — |
 | `SESION_INACTIVIDAD_HORAS` / `SESION_MAXIMA_DIAS` | Cierre de la sesión del panel: 8 h sin actividad / 7 días como máximo | — |
 | `INVITATION_ORIGIN` | Origen de la invitación: CORS de la API pública y base del enlace `/#t=`. Solo esquema y host; `https` salvo `localhost`/`127.0.0.1` | — |
 | `RATE_LIMIT_TOKEN_LOOKUP_PER_HOUR` / `RATE_LIMIT_TOKEN_RESPONSE_PER_HOUR` / `RATE_LIMIT_IP_PER_HOUR` | Umbrales (ADR 0019): 20 / 10 / 300 por hora | — |

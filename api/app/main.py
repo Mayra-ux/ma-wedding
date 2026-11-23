@@ -3,7 +3,7 @@
 - `/health`: sin DB.
 - `/api/v1/public/...`: sub-aplicación con CORS restringido, límites y tamaño de cuerpo.
 - `/api/v1/auth/...` y `/api/v1/admin/...`: panel, mismo origen, sin CORS (app/panel.py).
-- `/admin/`: página provisional del panel hasta I-9.
+- `/admin/`: build del panel React + Vite (I-9), servido por la API (ADR 0015).
 - Todas las respuestas llevan los encabezados de seguridad y `X-Request-ID`; el log de
   acceso usa una lista cerrada de campos (app/seguridad.py).
 """
@@ -19,7 +19,7 @@ from app.errores import AtrapaErrores, instalar_manejadores
 from app.estado import Reloj, reloj_sistema
 from app.google import GoogleReal, ProveedorGoogle
 from app.limites import LimitadorVentana
-from app.panel import ContextoPanel, crear_app_admin, crear_app_auth, crear_panel_provisional
+from app.panel import ContextoPanel, crear_app_admin, crear_app_auth, crear_panel
 from app.publica import ContextoPublico, crear_app_publica
 from app.seguridad import SeguridadYAcceso
 from app.sesiones_panel import Duraciones, Listas, LlavesPanel, SecretoInvalido
@@ -126,7 +126,7 @@ def create_app(
     app.state.admin = crear_app_admin(panel, settings.max_body_admin, settings.max_import_file)
     app.mount("/api/v1/auth", crear_app_auth(panel, settings.max_body_admin))
     app.mount("/api/v1/admin", app.state.admin)
-    app.mount("/admin", crear_panel_provisional())
+    app.mount("/admin", crear_panel(settings.panel_dir))
 
     app.add_middleware(AtrapaErrores)
     app.add_middleware(SeguridadYAcceso, hsts=settings.security_hsts)

@@ -63,7 +63,7 @@ def buscar(s: Session, codigo: str, *, bloquear: bool = False) -> Invitacion:
     return inv
 
 
-def _no_archivada(inv: Invitacion) -> None:
+def no_archivada(inv: Invitacion) -> None:
     if inv.archivada_en is not None:
         raise ErrorAPI(409, "archivada")
 
@@ -208,7 +208,7 @@ def editar(s: Session, codigo: str, entrada: EntradaEdicion, actor: str) -> Invi
     enviados = {c: getattr(entrada, c) for c in entrada.model_fields_set}
     datos = _validar_campos(enviados)
     inv = buscar(s, codigo, bloquear=True)
-    _no_archivada(inv)
+    no_archivada(inv)
     roles_actuales = _roles_de(s, inv.id)
     cambiados = set()
     for campo, valor in datos.items():
@@ -270,7 +270,7 @@ def restaurar(s: Session, codigo: str, actor: str) -> None:
 def desbloquear(s: Session, codigo: str, hasta: datetime, ahora: datetime, actor: str) -> None:
     """M13: solo después del plazo, hasta el congelamiento de los invitados como máximo."""
     inv = buscar(s, codigo, bloquear=True)
-    _no_archivada(inv)
+    no_archivada(inv)
     config = configuracion(s)
     if ahora >= config.congelamiento:
         raise ErrorAPI(409, "rsvp_congelado")
@@ -311,7 +311,7 @@ def responder_como_admin(
     if errores:
         raise ErrorAPI(422, "validacion", errores)
     inv = buscar(s, codigo, bloquear=True)
-    _no_archivada(inv)
+    no_archivada(inv)
     if entrada.asiste:
         if not 1 <= entrada.confirmados <= inv.pases:
             raise ErrorAPI(422, "confirmados_fuera_de_rango")
@@ -561,7 +561,13 @@ MESES = (
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 )  # fmt: skip
 
-# Textos PROVISIONALES: se aprueban en I-9 (ADR 0026). Nunca llevan el enlace.
+# Textos aprobados por los novios en I-9 (ADR 0026, 0029). Los recordatorios nunca llevan
+# el enlace; solo el mensaje de envío del enlace (solo novios) lo incluye.
+TEXTO_ENLACE = (
+    "Hola, {nombre}: con mucha ilusión te invitamos a nuestra boda el sábado 6 de marzo de "
+    "2027. Es peligroso ir solo… ¡acompáñanos! Aquí está tu invitación, donde puedes confirmar "
+    "tu asistencia a más tardar el {fecha}:\n{enlace}\nCon cariño, Mayra y Alejandro"
+)
 TEXTO_CONFIRMAR = (
     "Hola, te recordamos confirmar tu asistencia a la boda de Mayra y Alejandro a más tardar "
     "el {fecha}, desde el enlace que te enviamos por WhatsApp. Si no lo encuentras, escríbenos "
@@ -600,7 +606,7 @@ def tipo_de_recordatorio(config: ConfiguracionEvento, ahora: datetime) -> str:
 
 def recordatorio(s: Session, codigo: str, destino: str, ahora: datetime) -> Recordatorio:
     inv = buscar(s, codigo)
-    _no_archivada(inv)
+    no_archivada(inv)
     config = configuracion(s)
     tipo = tipo_de_recordatorio(config, ahora)
     telefono = inv.telefono_principal if destino == "principal" else inv.contacto_alterno_tel
@@ -612,6 +618,17 @@ def recordatorio(s: Session, codigo: str, destino: str, ahora: datetime) -> Reco
         else TEXTO_EVENTO
     )
     return Recordatorio(tipo=tipo, texto=texto, telefono=telefono)
+
+
+def mensaje_enlace(s: Session, inv: Invitacion, destino: str, url: str) -> Recordatorio:
+    """Mensaje de WhatsApp con el enlace personal (solo novios; ADR 0029)."""
+    no_archivada(inv)
+    telefono = inv.telefono_principal if destino == "principal" else inv.contacto_alterno_tel
+    if not telefono:
+        raise ErrorAPI(409, "sin_telefono")
+    fecha = fecha_larga(fecha_limite_mostrar(configuracion(s).cierre_plazo))
+    texto = TEXTO_ENLACE.format(nombre=inv.nombre_mostrar, fecha=fecha, enlace=url)
+    return Recordatorio(tipo="enlace", texto=texto, telefono=telefono)
 
 
 def marcar_recordatorio(s: Session, codigo: str, destino: str, ahora: datetime, actor: str) -> str:

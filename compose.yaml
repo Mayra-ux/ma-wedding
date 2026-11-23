@@ -10,6 +10,8 @@ name: ma-wedding
 x-api-base: &api-base
   build:
     context: ./api
+    additional_contexts:
+      panel-src: ./panel   # código del panel, compilado en la etapa de Node (I-9)
   env_file: .env
   read_only: true
   tmpfs:

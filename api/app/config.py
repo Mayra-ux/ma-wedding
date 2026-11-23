@@ -2,6 +2,7 @@
 
 import re
 from functools import lru_cache
+from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
@@ -90,6 +91,8 @@ class Settings(BaseSettings):
     # Origen público de la API y del panel: base de la URI de redirección y valor esperado
     # del encabezado Origin en las escrituras del panel.
     panel_origin: str = "http://localhost:8000"
+    # Carpeta con el build del panel (I-9). En la imagen: /srv/panel. Sin build → 503.
+    panel_dir: Path | None = None
     google_client_id: str | None = None
     google_client_secret: SecretStr | None = None
     # Firma del estado de OAuth y de los identificadores de sesión (doc 11).
